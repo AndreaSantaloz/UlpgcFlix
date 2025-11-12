@@ -11,7 +11,28 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
+private val LightColorScheme = lightColorScheme(
+    primary = AcentoPrincipal,
+    secondary = AcentoSecundario,
+    background = FondoPrincipal,
+    surface = FondoSecundario,
+    onPrimary = TextoPrincipal,
+    onSecondary = TextoSecundario,
+    onBackground = TextoPrincipal,
+    onSurface = TextoSecundario
+)
+
 private val DarkColorScheme = darkColorScheme(
+    primary = AcentoPrincipalDark,
+    secondary = AcentoSecundarioDark,
+    background = FondoPrincipalDark,
+    surface = FondoSecundarioDark,
+    onPrimary = TextoPrincipalDark,
+    onSecondary = TextoSecundarioDark,
+    onBackground = TextoPrincipalDark,
+    onSurface = TextoSecundarioDark
+)
+/*private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
     tertiary = Pink80
@@ -31,7 +52,7 @@ private val LightColorScheme = lightColorScheme(
     onBackground = Color(0xFF1C1B1F),
     onSurface = Color(0xFF1C1B1F),
     */
-)
+)*/
 
 @Composable
 fun UlpgcFlixTheme(
