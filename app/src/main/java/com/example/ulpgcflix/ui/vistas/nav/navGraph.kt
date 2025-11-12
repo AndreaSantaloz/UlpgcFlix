@@ -35,7 +35,8 @@ fun NavigationGraph() {
         }
         composable(Screen.Filtro.route){
             ElegirGustosScreen(
-
+                onConfirmar= {navController.navigate(Screen.Home.route)
+                }
             )
         }
     }
