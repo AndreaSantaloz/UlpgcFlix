@@ -8,6 +8,7 @@ import com.example.ulpgcflix.ui.vistas.comienzo.OnboardingScreen
 import com.example.ulpgcflix.ui.vistas.login.LoginScreen
 import com.example.ulpgcflix.ui.vistas.registro.RegistroScreen
 import com.example.ulpgcflix.ui.vistas.filtro.ElegirGustosScreen
+import com.example.ulpgcflix.ui.vistas.listOfFilms.PeliculasScreen
 
 @Composable
 fun NavigationGraph() {
@@ -35,9 +36,12 @@ fun NavigationGraph() {
         }
         composable(Screen.Filtro.route){
             ElegirGustosScreen(
-                onConfirmar= {navController.navigate(Screen.Home.route)
+                onConfirmar= {navController.navigate(Screen.ListOfFilms.route)
                 }
             )
+        }
+        composable(Screen.ListOfFilms.route){
+            PeliculasScreen()
         }
     }
 }
