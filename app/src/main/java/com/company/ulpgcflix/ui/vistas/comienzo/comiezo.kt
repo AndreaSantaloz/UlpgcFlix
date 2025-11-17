@@ -18,7 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.res.painterResource
-import com.example.ulpgcflix.R
+import com.company.ulpgcflix.R
 
 
 @Composable

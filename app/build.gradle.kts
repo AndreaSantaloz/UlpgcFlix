@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.ulpgcflix"
+    namespace = "com.company.ulpgcflix"
     compileSdk = 36
 
     defaultConfig {

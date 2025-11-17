@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.company.ulpgcflix.firestore.AuthCallback
 import com.company.ulpgcflix.firestore.FirestoreClass
-import com.example.ulpgcflix.R
+import com.company.ulpgcflix.R
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
