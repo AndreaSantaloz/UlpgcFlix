@@ -1,9 +1,9 @@
 // FiltroServiceImpl.kt
 package com.example.ulpgcflix.data.service
 
-import com.example.ulpgcflix.ui.interfaces.film
-import com.example.ulpgcflix.ui.interfaces.Gusto
-import kotlinx.coroutines.delay
+import com.company.ulpgcflix.ui.interfaces.film
+import com.company.ulpgcflix.ui.interfaces.Gusto
+
 interface FiltroService {
     suspend fun guardarFiltros(gustos: List<Gusto>)
     suspend fun obtenerPeliculasFiltradas(): List<film>

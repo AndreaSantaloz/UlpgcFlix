@@ -1,4 +1,4 @@
-package com.example.ulpgcflix.ui.vistas.nav
+package com.company.ulpgcflix.ui.vistas.nav
 
 sealed class Screen(val route: String) {
     object Onboarding : Screen("onboarding")

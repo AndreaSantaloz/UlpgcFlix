@@ -1,4 +1,4 @@
-package com.example.ulpgcflix.ui.interfaces
+package com.company.ulpgcflix.ui.interfaces
 
 import androidx.compose.ui.graphics.vector.ImageVector
 

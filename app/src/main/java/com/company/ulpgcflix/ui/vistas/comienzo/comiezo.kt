@@ -1,4 +1,4 @@
-package com.example.ulpgcflix.ui.vistas.comienzo
+package com.company.ulpgcflix.ui.vistas.comienzo
 
 
 import androidx.compose.foundation.Image
@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.res.painterResource
 import com.example.ulpgcflix.R
@@ -29,8 +30,8 @@ fun OnboardingScreen(
     // Degradado suave: azul pastel -> blanco
     val gradientBrush = Brush.linearGradient(
         colors = listOf(colors.background, colors.primary),
-        start = androidx.compose.ui.geometry.Offset(0f, 0f),
-        end = androidx.compose.ui.geometry.Offset(1000f, 1500f),
+        start = Offset(0f, 0f),
+        end = Offset(1000f, 1500f),
         tileMode = TileMode.Clamp
     )
 

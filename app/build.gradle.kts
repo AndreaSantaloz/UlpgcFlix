@@ -10,7 +10,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.ulpgcflix"
+        applicationId = "com.company.ulpgcflix"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -42,6 +42,7 @@ android {
 
 dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
+    implementation("com.google.firebase:firebase-auth-ktx:23.2.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

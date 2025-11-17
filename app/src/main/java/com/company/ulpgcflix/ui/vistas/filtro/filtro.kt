@@ -1,4 +1,4 @@
-package com.example.ulpgcflix.ui.vistas.filtro
+package com.company.ulpgcflix.ui.vistas.filtro
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,12 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ulpgcflix.ui.interfaces.Gusto
+import com.company.ulpgcflix.ui.interfaces.Gusto
 import com.example.ulpgcflix.data.service.FiltroServiceImpl
 import kotlinx.coroutines.launch
 
