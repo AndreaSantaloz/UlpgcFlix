@@ -50,7 +50,7 @@ fun RegistroScreen(
             result.onSuccess {
                 // Éxito: Muestra mensaje y navega (onRegisterSuccess)
                 Toast.makeText(context, "¡Registro exitoso! Ya puedes iniciar sesión.", Toast.LENGTH_LONG).show()
-                onRegisterSuccess() // Esto debería navegar de vuelta a la pantalla de login o al home
+                onRegisterSuccess() // Esto debería navegar a la pantalla de gustos
             }.onFailure { error ->
                 // Fallo: Muestra el mensaje de error de Firebase (ej. 'La contraseña debe tener al menos 6 caracteres')
                 Toast.makeText(context, "Error de registro: ${error.message}", Toast.LENGTH_LONG).show()

@@ -3,12 +3,15 @@ package com.company.ulpgcflix.ui.vistas.listOfFilms
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,11 +25,17 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.company.ulpgcflix.ui.interfaces.film
 import com.example.ulpgcflix.data.service.FiltroServiceImpl
+import com.company.ulpgcflix.ui.servicios.FavServiceImpl
+import kotlinx.coroutines.launch
+
 
 @Composable
-fun PeliculasScreen() {
+fun PeliculasScreen(
+    setingSucess:()-> Unit
+) {
     // Estado para almacenar las películas
     var peliculas by remember { mutableStateOf<List<film>>(emptyList()) }
+    val scope = rememberCoroutineScope()
 
     // Cargar las películas filtradas al entrar en la pantalla
     LaunchedEffect(Unit) {
@@ -43,6 +52,22 @@ fun PeliculasScreen() {
 
     ) {
         Spacer(modifier = Modifier.height(10.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            IconButton (onClick = {
+                setingSucess()// Navegar a ajustes o abrir menú
+            }) {
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = "Ajustes"
+                )
+            }
+        }
+
         Text(
             text = "Recomendaciones",
             fontWeight = FontWeight.Bold,
@@ -119,17 +144,19 @@ fun PeliculasScreen() {
                 }) {
                     Icon(
                         imageVector = Icons.Default.Cancel,
-                        contentDescription = "Anterior",
+                        contentDescription = "dislike",
                         tint = Color.White
                     )
                 }
 
                 Button(onClick = {
-                    currentIndex = (currentIndex + 1) % peliculas.size
-                }) {
+                    scope.launch {
+                        FavServiceImpl.addFav(peliculas[currentIndex])
+                        currentIndex = (currentIndex + 1) % peliculas.size
+                    }                }) {
                     Icon(
                         imageVector = Icons.Default.Favorite,
-                        contentDescription = "Anterior",
+                        contentDescription = "like",
                         tint = Color.White
                     )
                 }
