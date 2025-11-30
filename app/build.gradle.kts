@@ -1,3 +1,6 @@
+import java.util.Properties
+
+// --- Plugins ---
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,11 +8,28 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+// --- Configuración Android ---
 android {
     namespace = "com.company.ulpgcflix"
     compileSdk = 36
+    buildFeatures {
+        buildConfig = true
+        compose = true
+    }
 
     defaultConfig {
+        val properties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.inputStream().use { properties.load(it) }
+        } else {
+            println("WARNING: local.properties file not found.")
+        }
+        val tmdbApiKey: String = properties.getProperty("TMDB_API_KEY") ?: "DEFAULT_API_KEY_OR_ERROR"
+        println("TMDB_API_KEY cargada: $tmdbApiKey")
+        // --- BuildConfig Field ---
+        buildConfigField("String", "TMDB_API_KEY", "\"$tmdbApiKey\"")
+
         applicationId = "com.company.ulpgcflix"
         minSdk = 24
         targetSdk = 36
@@ -17,6 +37,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+
     }
 
     buildTypes {
@@ -28,21 +50,27 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
-    buildFeatures {
-        compose = true
-    }
+
+
 }
 
+// --- Dependencias ---
 dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
     implementation("com.google.firebase:firebase-auth-ktx:23.2.1")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -51,6 +79,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.runtime)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

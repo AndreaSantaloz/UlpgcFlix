@@ -5,11 +5,11 @@ sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
     object Home : Screen("home")
-    object Filtro: Screen("filtro")
-
-    object  ListOfFilms: Screen("films")
-
+    object Categories: Screen("categories")
+    object  VisualContent: Screen("visualContent")
     object Profile: Screen("profile")
+    object FavouriteVisualContent: Screen("favouriteVisualContent")
+    object Setting: Screen("Setting")
 
-    object FavList: Screen("favlist")
+    object SocialMedia: Screen("SocialMedia")
 }

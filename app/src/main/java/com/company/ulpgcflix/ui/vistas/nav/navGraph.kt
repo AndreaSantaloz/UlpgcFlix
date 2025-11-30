@@ -4,21 +4,27 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.company.ulpgcflix.ui.vistas.comienzo.OnboardingScreen
-import com.company.ulpgcflix.ui.vistas.filtro.ElegirGustosScreen
-import com.company.ulpgcflix.ui.vistas.listOfFilms.PeliculasScreen
+import com.company.ulpgcflix.ui.vistas.home.OnboardingScreen
+import com.company.ulpgcflix.ui.vistas.Categories.Categories
+import com.company.ulpgcflix.ui.vistas.FavouriteVisualContent.FavouriteVisualContent
+import com.company.ulpgcflix.ui.vistas.VisualContent.VisualContent
 import com.company.ulpgcflix.ui.vistas.login.LoginScreen
 import com.company.ulpgcflix.ui.vistas.registro.RegistroScreen
-import com.company.ulpgcflix.ui.vistas.profile.PerfilScreen
-import com.company.ulpgcflix.ui.vistas.favList.ListaFavoritosScreen
+import com.company.ulpgcflix.ui.vistas.profile.ProfileScreen
+import com.company.ulpgcflix.ui.vistas.Setting.Setting
+import com.company.ulpgcflix.ui.vistas.SocialMedia.SocialMedia
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun NavigationGraph() {
+fun NavigationGraph(
+    onToggleDarkMode: (Boolean) -> Unit,
+    isDarkModeEnabled: Boolean
+) {
     val navController = rememberNavController()
+    val auth = FirebaseAuth.getInstance()
 
     NavHost(navController = navController, startDestination = Screen.Onboarding.route) {
 
-        // ONBOARDING -> LOGIN (permite volver atrás)
         composable(Screen.Onboarding.route) {
             OnboardingScreen(
                 onContinueClick = {
@@ -27,12 +33,11 @@ fun NavigationGraph() {
             )
         }
 
-        // LOGIN -> LISTA (NO permite volver al login)
-        // LOGIN -> REGISTRO (sí permite volver atrás)
+
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(Screen.ListOfFilms.route) {
+                    navController.navigate(Screen.VisualContent.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
@@ -42,48 +47,90 @@ fun NavigationGraph() {
             )
         }
 
-        // REGISTRO-> FILTRO (permite volver atrás)
         composable(Screen.Register.route) {
             RegistroScreen(
                 onRegisterSuccess = {
-                    navController.navigate(Screen.Filtro.route)
-                }
-            )
-        }
-
-        // FILTRO ->LISTA (NO permite volver al filtro)
-        composable(Screen.Filtro.route) {
-            ElegirGustosScreen(
-                onConfirmar = {
-                    navController.navigate(Screen.ListOfFilms.route) {
-                        popUpTo(Screen.Filtro.route) { inclusive = true }
+                    navController.navigate(Screen.Categories.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 }
             )
         }
 
-        // PELÍCULAS (back funciona normal)
-        // PERFIL (permite volver)
-        composable(Screen.ListOfFilms.route) {
-            PeliculasScreen(
+        composable(Screen.Categories.route) {
+            Categories(
+                onCategoriesSelected = {
+                    navController.navigate(Screen.VisualContent.route) {
+                        popUpTo(Screen.Categories.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.VisualContent.route) {
+            VisualContent(
                 setingSucess = {
                     navController.navigate(Screen.Profile.route)
+                },
+                onSocialMedia = {
+                    navController.navigate(Screen.SocialMedia.route)
                 }
+
+
             )
         }
 
-        // PERFIL -> FAVORITOS (permite volver)
         composable(Screen.Profile.route) {
-            PerfilScreen(
-                FavSuccess = {
-                    navController.navigate(Screen.FavList.route)
+            ProfileScreen (
+
+                onSettings={
+                    navController.navigate(Screen.Setting.route)
+                },onVisualContent={
+                    navController.popBackStack()
+                },onGoToFavorites={
+                    navController.navigate(Screen.FavouriteVisualContent.route)
+                },
+            )
+        }
+
+        composable(Screen.Setting.route) {
+            Setting(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onEditProfile = {
+                    navController.navigate(Screen.Profile.route)
+                },
+                onEditPreferences = {
+                    navController.navigate(Screen.Categories.route)
+                },
+                onToggleDarkMode = onToggleDarkMode,
+                isDarkModeEnabled = isDarkModeEnabled,
+
+                onLogout = {
+                    auth.signOut()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
                 }
             )
         }
 
-        // FAVORITOS → (solo vuelve atrás)
-        composable(Screen.FavList.route) {
-            ListaFavoritosScreen()
+        composable(Screen.FavouriteVisualContent.route) {
+            FavouriteVisualContent (
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
+        composable(Screen.SocialMedia.route){
+            SocialMedia (
+                onSocialMedia = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+
     }
 }

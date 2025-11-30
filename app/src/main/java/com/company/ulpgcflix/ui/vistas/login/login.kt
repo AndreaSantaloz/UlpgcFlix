@@ -21,10 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.company.ulpgcflix.firestore.AuthCallback
-import com.company.ulpgcflix.firestore.FirestoreClass
+import com.company.ulpgcflix.firebase.AuthCallback
+import com.company.ulpgcflix.firebase.FirebaseAuthentication
 import com.company.ulpgcflix.R
-
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun LoginScreen(
@@ -36,7 +35,7 @@ fun LoginScreen(
     var isLoading by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-    val firestoreClass = remember { FirestoreClass() }
+    val firebaseAuthentication = remember { FirebaseAuthentication() }
     var loginAttemptResult by remember { mutableStateOf<Result<String>?>(null) }
 
     LaunchedEffect(loginAttemptResult) {
@@ -57,9 +56,8 @@ fun LoginScreen(
         if (email.isNotBlank() && password.isNotBlank()) {
             isLoading = true
 
-            firestoreClass.LoginUser(email, password, object : AuthCallback {
+            firebaseAuthentication.LoginUser(email, password, object : AuthCallback {
                 override fun onSuccess(message: String) {
-                    // Actualiza el estado con éxito
                     loginAttemptResult = Result.success(message)
                 }
 
@@ -207,7 +205,6 @@ fun LoginScreen(
                     if (isLoading) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     } else {
-                        // Muestra el texto y el icono
                         Text("Confirmar", color = Color.White)
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(

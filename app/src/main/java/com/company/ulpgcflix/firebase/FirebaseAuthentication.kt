@@ -1,4 +1,4 @@
-package com.company.ulpgcflix.firestore
+package com.company.ulpgcflix.firebase
 
 import android.util.Log
 import com.google.firebase.Firebase
@@ -10,10 +10,10 @@ interface AuthCallback {
     fun onFailure(errorMessage: String)
 }
 
-class FirestoreClass {
+class FirebaseAuthentication {
 
     private val auth: FirebaseAuth = Firebase.auth
-    private val TAG = "FirestoreClass"
+    private val TAG = "FirebaseAuthenticationClass"
 
 
     fun RegisterUser(email: String, password: String, callback: AuthCallback) {

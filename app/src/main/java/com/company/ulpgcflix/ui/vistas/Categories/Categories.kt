@@ -1,15 +1,24 @@
-package com.company.ulpgcflix.ui.vistas.filtro
+package com.company.ulpgcflix.ui.vistas.Categories
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,34 +27,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.company.ulpgcflix.ui.interfaces.Gusto
-import com.example.ulpgcflix.data.service.FiltroServiceImpl
+import com.company.ulpgcflix.ui.servicios.CategoryServices
+import com.company.ulpgcflix.model.Category
+import com.company.ulpgcflix.ui.servicios.UserCategoriesService
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 
-
 @Composable
-fun ElegirGustosScreen(onConfirmar: () -> Unit) {
-    val gustos = listOf(
-        Gusto("Acción", Icons.Default.LocalFireDepartment),
-        Gusto("Comedia", Icons.Default.EmojiEmotions),
-        Gusto("Drama", Icons.Default.TheaterComedy),
-        Gusto("Terror", Icons.Default.MoodBad),
-        Gusto("Ciencia Ficción", Icons.Default.AirplanemodeActive),
-        Gusto("Romance", Icons.Default.Favorite),
-        Gusto("Animación", Icons.Default.Movie),
-        Gusto("Documental", Icons.Default.Book),
-        Gusto("Aventura", Icons.Default.Explore),
-        Gusto("Superhéroes", Icons.Default.Star),
-        Gusto("Fantasia", Icons.Default.AutoAwesome),
-        Gusto("Familiar/infantil", Icons.Default.ChildFriendly),
+fun Categories(onCategoriesSelected:() -> Unit){
 
-        )
-
-    //Estado con los gustos seleccionados
-    var seleccionados by remember { mutableStateOf(setOf<Gusto>()) }
+    val categoryService = remember { CategoryServices() }
+    val userCategoriesService = remember { UserCategoriesService() }
+    val categories = categoryService.getCategories()
+    var selected by remember { mutableStateOf(setOf<Category>()) }
     val scope = rememberCoroutineScope()
-
+    var isLoading by remember { mutableStateOf(false) }
+    val userId = remember { FirebaseAuth.getInstance().currentUser?.uid }
+    val isUserLoggedIn = userId != null
+    val isButtonEnabled = selected.isNotEmpty() && !isLoading && isUserLoggedIn
 
     Column(
         modifier = Modifier
@@ -71,15 +71,14 @@ fun ElegirGustosScreen(onConfirmar: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Lista desplazable
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(gustos) { gusto ->
-                val isSelected = seleccionados.contains(gusto)
+            items(categories) { category ->
+                val isSelected = selected.contains(category)
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -95,20 +94,21 @@ fun ElegirGustosScreen(onConfirmar: () -> Unit) {
                             RoundedCornerShape(50)
                         )
                         .clickable {
-                            seleccionados =
-                                if (isSelected) seleccionados - gusto
-                                else seleccionados + gusto
+                            selected =
+                                if (isSelected) selected - category
+                                else selected + category
                         }
                         .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
+
                     Icon(
-                        imageVector = gusto.icono,
-                        contentDescription = gusto.nombre,
+                        imageVector = category.categoryIcon,
+                        contentDescription = category.categoryName,
                         tint = if (isSelected) Color.White else Color(0xFF2D2D2D)
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = gusto.nombre,
+                        text = category.categoryName,
                         fontSize = 16.sp,
                         color = if (isSelected) Color.White else Color(0xFF2D2D2D),
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
@@ -121,18 +121,36 @@ fun ElegirGustosScreen(onConfirmar: () -> Unit) {
 
         Button(
             onClick = {
-                scope.launch {
-                    FiltroServiceImpl.guardarFiltros(seleccionados.toList())
-                    onConfirmar()
+                if (isButtonEnabled) {
+                    isLoading = true
+                    scope.launch {
+                        try {
+
+                            onCategoriesSelected()
+
+                        } catch (e: Exception) {
+
+                            println("🚨 ERROR CRÍTICO AL GUARDAR EN FIREBASE O NAVEGAR:")
+                            e.printStackTrace()
+                        } finally {
+                            isLoading = false
+                        }
+                    }
                 }
-             },
+            },
+            enabled = isButtonEnabled,
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D2D2D)),
             shape = RoundedCornerShape(50),
             modifier = Modifier
                 .fillMaxWidth(0.8f)
                 .height(50.dp)
         ) {
-            Text("Confirmar", color = Color.White)
+            val buttonText = when {
+                !isUserLoggedIn -> "Error: No Autenticado"
+                isLoading -> "Guardando..."
+                else -> "Confirmar"
+            }
+            Text(buttonText, color = Color.White)
         }
     }
 }

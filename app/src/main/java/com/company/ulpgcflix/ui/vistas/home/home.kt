@@ -1,4 +1,4 @@
-package com.company.ulpgcflix.ui.vistas.comienzo
+package com.company.ulpgcflix.ui.vistas.home
 
 
 import androidx.compose.foundation.Image
@@ -27,7 +27,7 @@ fun OnboardingScreen(
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
-    // Degradado suave: azul pastel -> blanco
+
     val gradientBrush = Brush.linearGradient(
         colors = listOf(colors.background, colors.primary),
         start = Offset(0f, 0f),

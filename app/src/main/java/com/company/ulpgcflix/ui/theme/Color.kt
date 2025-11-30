@@ -25,4 +25,5 @@ val TextoPrincipalDark = Color(0xFFE3E8EF)
 val TextoSecundarioDark = Color(0xFF8E8E93)
 val AcentoPrincipalDark = Color(0xFF8EA5FF)
 val AcentoSecundarioDark = Color(0xFFFFB6A0)
+
 val ElementosDestacadosDark = Color(0xFF7FECD2)

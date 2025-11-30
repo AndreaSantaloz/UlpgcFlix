@@ -4,38 +4,40 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
 import com.company.ulpgcflix.ui.theme.UlpgcFlixTheme
 import com.company.ulpgcflix.ui.vistas.nav.NavigationGraph
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            UlpgcFlixTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting()
-                }
-            }
+            AppContent()
         }
     }
 }
 
 @Composable
-fun Greeting() {
-    UlpgcFlixTheme {
-        NavigationGraph()
+fun AppContent() {
+    var isDarkTheme by remember { mutableStateOf(false) }
+    val onToggleDarkMode: (Boolean) -> Unit = { shouldBeDark ->
+        isDarkTheme = shouldBeDark
+    }
+    UlpgcFlixTheme(darkTheme = isDarkTheme) {
+
+            NavigationGraph(
+                onToggleDarkMode = onToggleDarkMode,
+                isDarkModeEnabled = isDarkTheme
+            )
+
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-    UlpgcFlixTheme {
-        NavigationGraph()
-    }
+fun AppPreview() {
+    AppContent()
 }
