@@ -6,9 +6,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+    //id("org.sonarqube") version "5.0.0.4638" // Plugin de SonarQube
 }
 
-// --- Configuración Android ---
+
 android {
     namespace = "com.company.ulpgcflix"
     compileSdk = 36
@@ -26,19 +27,16 @@ android {
             println("WARNING: local.properties file not found.")
         }
         val tmdbApiKey: String = properties.getProperty("TMDB_API_KEY") ?: "DEFAULT_API_KEY_OR_ERROR"
-        println("TMDB_API_KEY cargada: $tmdbApiKey")
         // --- BuildConfig Field ---
         buildConfigField("String", "TMDB_API_KEY", "\"$tmdbApiKey\"")
 
         applicationId = "com.company.ulpgcflix"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 36 // Usamos la misma que compileSdk
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-
     }
 
     buildTypes {
@@ -60,13 +58,18 @@ android {
         jvmTarget = "11"
     }
 
-
+    // Configuración para usar la carpeta 'src/main/java' o 'src/main/kotlin' como fuente
+    sourceSets.getByName("main") {
+        java.srcDirs("src/main/java", "src/main/kotlin")
+    }
 }
 
 // --- Dependencias ---
 dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:34.5.0"))
-    implementation("com.google.firebase:firebase-auth-ktx:23.2.1")
+    // Es recomendable usar la versión más reciente del BOM para estabilidad
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0")) // Usando una versión estable
+
+    implementation("com.google.firebase:firebase-auth-ktx") // Versiones sin especificar ya que están en el BOM
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
@@ -92,3 +95,5 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("io.coil-kt:coil-compose:2.6.0")
 }
+
+

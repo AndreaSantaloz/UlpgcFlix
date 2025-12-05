@@ -22,9 +22,9 @@ fun Setting(
     onEditPreferences: () -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     onLogout: () -> Unit,
-    isDarkModeEnabled: Boolean = false
+    isDarkModeEnabled: Boolean = false // <-- Usamos este parámetro
 ) {
-    var darkModeState by remember { mutableStateOf(isDarkModeEnabled) }
+    // ❌ LÍNEA ELIMINADA: var darkModeState by remember { mutableStateOf(isDarkModeEnabled) }
 
     Scaffold(
         topBar = {
@@ -45,6 +45,10 @@ fun Setting(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                // ✅ IMPORTANTE: Asegúrate de que el contenedor principal dentro de Scaffold
+                // no tenga un color de fondo fijo. Scaffold debería aplicar el color del tema
+                // automáticamente, pero si tienes problemas, añade:
+                // .background(MaterialTheme.colorScheme.background)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
 
@@ -52,6 +56,8 @@ fun Setting(
             Text(
                 text = "Cuenta",
                 style = MaterialTheme.typography.titleMedium,
+                // ✅ Usa el color del tema para el texto
+                color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
             )
 
@@ -73,6 +79,8 @@ fun Setting(
             Text(
                 text = "Apariencia",
                 style = MaterialTheme.typography.titleMedium,
+                // ✅ Usa el color del tema para el texto
+                color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
             )
 
@@ -80,10 +88,7 @@ fun Setting(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 56.dp)
-                    .clickable {
-                        darkModeState = !darkModeState
-                        onToggleDarkMode(darkModeState)
-                    }
+                    // ❌ ELIMINADA la lógica de clic en el Row, el Switch la maneja
                     .padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -91,13 +96,16 @@ fun Setting(
                 Text(
                     text = "Modo Oscuro",
                     style = MaterialTheme.typography.bodyLarge,
+                    // ✅ Usa el color del tema para el texto
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.weight(1f) // Ocupa el espacio
                 )
                 Spacer(Modifier.width(16.dp))
                 Switch(
-                    checked = darkModeState,
+                    // ✅ CORREGIDO: Usamos el estado global
+                    checked = isDarkModeEnabled,
                     onCheckedChange = { isChecked ->
-                        darkModeState = isChecked
+                        // ✅ CORREGIDO: Llamamos directamente al callback global
                         onToggleDarkMode(isChecked)
                     }
                 )
@@ -147,7 +155,9 @@ fun SettingItem(
             Spacer(Modifier.width(16.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                // ✅ Usa el color del tema para el texto
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
         Icon(
