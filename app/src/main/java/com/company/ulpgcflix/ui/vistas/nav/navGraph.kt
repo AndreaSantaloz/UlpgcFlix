@@ -44,30 +44,37 @@ fun NavigationGraph(
         composable(Screen.Onboarding.route) {
             OnboardingScreen(onContinueClick = { navController.navigate(Screen.Login.route) })
         }
+
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = { navController.navigate(Screen.VisualContent.route) { popUpTo(Screen.Login.route) { inclusive = true } } },
                 onRegisterClick = { navController.navigate(Screen.Register.route) }
             )
         }
+
         composable(Screen.Register.route) {
             RegistroScreen(
-                onRegisterSuccess = { navController.navigate(Screen.Categories.route) { popUpTo(Screen.Register.route) { inclusive = true } } }
+                onRegisterSuccess = { navController.navigate(Screen.Categories.route) }
             )
         }
 
         composable(Screen.Categories.route) {
-            val isEditMode = navController.previousBackStackEntry?.destination?.route != Screen.Register.route
+            val previousRoute = navController.previousBackStackEntry?.destination?.route
+            val isEditMode = previousRoute != Screen.Register.route
 
             Categories(
                 isEditMode = isEditMode,
-                onBack = { navController.popBackStack() },
+                onBack = {
+                    if (isEditMode) {
+                        navController.popBackStack()
+                    }
+                },
                 onCategoriesSelected = {
                     if (isEditMode) {
                         navController.popBackStack()
                     } else {
                         navController.navigate(Screen.VisualContent.route) {
-                            popUpTo(Screen.Categories.route) { inclusive = true }
+                            popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     }
                 }

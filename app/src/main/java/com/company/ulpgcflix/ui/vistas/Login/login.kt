@@ -182,9 +182,6 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                TextButton(onClick = { /* TODO */ }) {
-                    Text("¿Olvidaste la contraseña?", color = Color.Gray, fontSize = 13.sp)
-                }
 
                 TextButton(onClick = {onRegisterClick() }) {
                     Text("Crear cuenta", color = Color.Gray, fontSize = 13.sp)
