@@ -9,7 +9,6 @@ class UserCategoriesService {
 
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    // Usamos CategoryServices para obtener las categorías de referencia
     private val categoryService = CategoryServices()
 
 
@@ -21,7 +20,6 @@ class UserCategoriesService {
             .get()
             .await()
 
-        // Mapea a [Nombre -> ID de TMDB (Long)]
         val categoryDataMap: Map<String, Long> = selectedCategories.associate { category ->
             val tmdbIdAsLong = category.categoryId.toLongOrNull() ?: 0L
             category.categoryName to tmdbIdAsLong
@@ -33,14 +31,12 @@ class UserCategoriesService {
 
         try {
             if (existingDocSnapshot.documents.isNotEmpty()) {
-                // Si el documento existe, lo actualiza
                 val docId = existingDocSnapshot.documents.first().id
                 categoriesCollection.document(docId)
                     .update(dataToUpdate)
                     .await()
-                println("✅ Categorías de Películas actualizadas (reemplazadas) para el usuario: $userId")
+
             } else {
-                // Si el documento no existe, lo crea
                 val dataToCreate = hashMapOf<String, Any>(
                     "usuario" to userId,
                     "tmdbCategoriesMap" to categoryDataMap
@@ -48,7 +44,6 @@ class UserCategoriesService {
                 categoriesCollection
                     .add(dataToCreate)
                     .await()
-                println("✅ Nuevo documento de categorías de Películas creado para el usuario: $userId")
             }
         } catch (e: Exception) {
             println("❌ Error saving categories map to Firebase: ${e.message}")
@@ -74,11 +69,9 @@ class UserCategoriesService {
                     return emptySet()
                 }
 
-                // Usamos el método que devuelve todas las categorías de referencia (películas)
                 val movieCategoriesReference = categoryService.getCategories()
                 val savedCategoryNames = savedCategoriesMap.keys
 
-                // Filtramos las referencias por los nombres de categoría guardados
                 val selectedMovieCategories = movieCategoriesReference.filter { category ->
                     savedCategoryNames.contains(category.categoryName)
                 }.toSet()

@@ -1,19 +1,17 @@
 package com.company.ulpgcflix.model
 
 data class FavoriteContentMetadata(
-    // Campos existentes (con valores predeterminados para el mapeo de Firestore)
     val contentId: String = "",
     val title: String = "",
     val image: String = "",
     val kind: String = "",
     val assessment: Double = 0.0,
 
-    // Campos Añadidos:
-    val categoryIds: List<String> = emptyList(), // Guarda los IDs de categorías (números)
-    val isAdult: Boolean = false,          // Contenido para adultos
+    val categoryIds: List<String> = emptyList(),
+    val isAdult: Boolean = false,
 
     // Campo de gestión
-    val lastFetched: Long = 0L // Usamos 0L como valor predeterminado en lugar de System.currentTimeMillis()
+    val lastFetched: Long = 0L
 
 
 )

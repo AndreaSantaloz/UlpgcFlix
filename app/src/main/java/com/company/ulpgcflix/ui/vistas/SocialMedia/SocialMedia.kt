@@ -166,7 +166,6 @@ fun SocialMedia(
                             items(subscribedChannels, key = { it.getId + "_subscribed" }) { channel ->
                                 ChannelCard(
                                     channel = channel,
-                                    // 🟢 Las acciones llaman al VM, que actualiza el estado persistente.
                                     onFollowClick = { viewModel.followChannel(channel.getId) },
                                     onUnfollowClick = { viewModel.unfollowChannel(channel.getId) },
                                     onDeleteClick = { /* No aplica */ },
@@ -202,7 +201,7 @@ fun SocialMedia(
             }
         }
 
-        // --- FloatingActionButton ---
+
         FloatingActionButton(
             onClick = onNavigateToCreateChannel,
             modifier = Modifier
@@ -215,10 +214,6 @@ fun SocialMedia(
         }
     }
 }
-
-// ===================================================
-// COMPONENTES AUXILIARES
-// ===================================================
 
 @Composable
 fun SectionHeader(title: String) {
@@ -254,7 +249,6 @@ fun ChannelCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Imagen del canal (AsyncImage)
             AsyncImage(
                 model = channel.getImage,
                 contentDescription = channel.getName,
@@ -265,8 +259,6 @@ fun ChannelCard(
             )
 
             Spacer(modifier = Modifier.width(16.dp))
-
-            // Info del canal
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = channel.getName,

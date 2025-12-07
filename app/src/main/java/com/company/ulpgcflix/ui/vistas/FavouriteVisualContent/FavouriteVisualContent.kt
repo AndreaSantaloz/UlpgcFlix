@@ -131,7 +131,7 @@ fun FavoriteItemCard(content: VisualContent, onDeleteClick: () -> Unit) {
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Imagen
+
             AsyncImage(
                 model = "https://image.tmdb.org/t/p/w200${content.getImage}",
                 contentDescription = content.getTitle,

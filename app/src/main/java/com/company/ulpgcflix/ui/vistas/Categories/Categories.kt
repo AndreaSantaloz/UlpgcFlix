@@ -27,11 +27,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun Categories(
-    // [MODIFICACIÓN 1]: Nuevo parámetro para diferenciar el modo
     isEditMode: Boolean = false,
-    // [MODIFICACIÓN 2]: Función para retroceder, solo usada en modo edición
     onBack: (() -> Unit)? = null,
-    // Función de navegación principal (para ir a la pantalla principal o salir de la edición)
     onCategoriesSelected: () -> Unit
 ) {
 
@@ -39,7 +36,6 @@ fun Categories(
     val userCategoriesService = remember { UserCategoriesService() }
     val categories = categoryService.getCategories()
 
-    // Si estamos en modo edición, intentamos cargar las categorías guardadas.
     val initialSelection = remember { mutableStateOf(setOf<Category>()) }
     var selected by remember { initialSelection }
 
@@ -49,7 +45,6 @@ fun Categories(
     val isUserLoggedIn = userId != null
     val isButtonEnabled = selected.isNotEmpty() && !isLoading && isUserLoggedIn
 
-    // [NUEVO]: Efecto para cargar las categorías existentes si estamos en modo edición
     LaunchedEffect(userId, isEditMode) {
         if (isEditMode && userId != null) {
             val savedCategories = userCategoriesService.getUserCategories(userId)
@@ -68,7 +63,6 @@ fun Categories(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // [MODIFICACIÓN 3]: Título dinámico
             Text(
                 text = if (isEditMode) "Editar Preferencias" else "Elige tus intereses",
                 fontSize = 26.sp,
@@ -140,7 +134,6 @@ fun Categories(
                         isLoading = true
                         scope.launch {
                             try {
-                                // [IMPORTANTE]: Lógica de guardar antes de navegar
                                 userCategoriesService.saveUserCategories(userId, selected)
                                 onCategoriesSelected()
 
@@ -169,7 +162,6 @@ fun Categories(
             }
         }
 
-        // [MODIFICACIÓN 4]: Botón de retroceso visible solo en modo edición
         if (isEditMode && onBack != null) {
             IconButton(
                 onClick = onBack,

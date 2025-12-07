@@ -30,7 +30,7 @@ fun RegistroScreen(
     onRegisterSuccess: () -> Unit
 ) {
     var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") } // Renombrado de gMail a email
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
@@ -198,7 +198,7 @@ fun RegistroScreen(
 
                 Button(
                     onClick = attemptRegister,
-                    enabled = !isLoading, // Deshabilita mientras carga
+                    enabled = !isLoading,
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D2D2D)),
                     modifier = Modifier

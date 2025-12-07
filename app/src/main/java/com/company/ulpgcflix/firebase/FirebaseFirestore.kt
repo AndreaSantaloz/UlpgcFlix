@@ -32,7 +32,7 @@ class FirebaseFirestore {
     }
     fun queryCollection(
         collectionPath: String,
-        query: (CollectionReference) -> Query, // La lambda recibe CollectionReference y debe retornar un objeto Query
+        query: (CollectionReference) -> Query,
         onSuccess: (QuerySnapshot) -> Unit,
         onFailure: (Exception) -> Unit
     ) {

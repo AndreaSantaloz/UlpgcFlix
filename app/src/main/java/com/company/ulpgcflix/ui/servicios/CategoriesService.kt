@@ -29,17 +29,11 @@ class CategoryServices: CategoryRepository {
         Category("37", "Western", Icons.Default.Grain)
     )
 
-    /**
-     * Implementa el método de la interfaz CategoryRepository.
-     * Devuelve la lista completa de categorías de Películas (la única soportada ahora).
-     */
     override fun getCategories(): List<Category> {
         return movieCategories
     }
 
-    /**
-     * Método explícito para obtener solo categorías de películas.
-     */
+
     fun getMovieCategories(): List<Category> {
         return movieCategories
     }

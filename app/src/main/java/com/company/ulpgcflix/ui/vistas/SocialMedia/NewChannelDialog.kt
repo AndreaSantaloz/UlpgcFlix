@@ -24,17 +24,10 @@ fun NewChannelDialog(
     onNavigateBack: () -> Unit,
     viewModel: SocialMediaViewModel
 ) {
-    // Estados para los campos de entrada
     var channelName by remember { mutableStateOf("") }
     var channelDescription by remember { mutableStateOf("") }
-
-    // Estado para la privacidad: true = Público, false = Privado
     var isPublic by remember { mutableStateOf(true) }
-
-    // Estado para mostrar el diálogo de confirmación/selección de privacidad
     var showPrivacyDialog by remember { mutableStateOf(false) }
-
-    // Consumir el estado de carga y error del ViewModel
     val isLoading by viewModel.isLoading
     val error by viewModel.error
 
@@ -58,7 +51,6 @@ fun NewChannelDialog(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // 1. Campo de Nombre del Canal
             OutlinedTextField(
                 value = channelName,
                 onValueChange = { channelName = it },
@@ -71,7 +63,6 @@ fun NewChannelDialog(
                 enabled = !isLoading
             )
 
-            // 2. Campo de Descripción del Canal
             OutlinedTextField(
                 value = channelDescription,
                 onValueChange = { channelDescription = it },
@@ -84,7 +75,6 @@ fun NewChannelDialog(
                 enabled = !isLoading
             )
 
-            // 3. Selector de Privacidad (Botón o Fila)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -119,7 +109,6 @@ fun NewChannelDialog(
             }
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 4. Mensaje de Error
             error?.let {
                 Text(
                     text = it,
@@ -128,7 +117,6 @@ fun NewChannelDialog(
                 )
             }
 
-            // 5. Botón de Creación
             Button(
                 onClick = {
                     if (channelName.isNotBlank()) {
@@ -136,14 +124,13 @@ fun NewChannelDialog(
                             name = channelName,
                             description = channelDescription,
                             isPublic = isPublic,
-                            onComplete = onNavigateBack // Vuelve atrás al completar con éxito
+                            onComplete = onNavigateBack
                         )
                     } else {
-                        // Opcional: Mostrar un mensaje temporal de validación
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = channelName.isNotBlank() && !isLoading // Deshabilitado si el nombre está vacío o está cargando
+                enabled = channelName.isNotBlank() && !isLoading
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
@@ -158,7 +145,6 @@ fun NewChannelDialog(
         }
     }
 
-    // Diálogo para seleccionar la privacidad
     if (showPrivacyDialog) {
         PrivacySelectionDialog(
             currentIsPublic = isPublic,
@@ -171,9 +157,6 @@ fun NewChannelDialog(
     }
 }
 
-// ===================================================
-// COMPONENTE DE DIÁLOGO
-// ===================================================
 
 @Composable
 fun PrivacySelectionDialog(
@@ -186,7 +169,6 @@ fun PrivacySelectionDialog(
         title = { Text("Seleccionar Visibilidad") },
         text = {
             Column {
-                // Opción Público
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -203,8 +185,6 @@ fun PrivacySelectionDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Público")
                 }
-
-                // Opción Privado
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

@@ -19,15 +19,14 @@ import com.company.ulpgcflix.ui.servicios.FavoritesService
 class VisualContentViewModel(
     private val visual: VisualContentService,
     private val categoryServices: CategoryServices,
-    apiService: ApiService, // Se mantiene para compatibilidad con Factory
+    apiService: ApiService,
     private val favoritesService: FavoritesService,
-    private val userCategoriesService: UserCategoriesService // <-- AÑADIDO EL SERVICIO DE USUARIO
+    private val userCategoriesService: UserCategoriesService
 ) : ViewModel() {
 
     private val _contentList = mutableStateOf<List<VisualContent>>(emptyList())
     val contentList: State<List<VisualContent>> = _contentList
 
-    // Lista de favoritos (añadida en la revisión anterior)
     private val _favoriteList = mutableStateOf<List<VisualContent>>(emptyList())
     val favoriteList: State<List<VisualContent>> = _favoriteList
 
@@ -35,16 +34,11 @@ class VisualContentViewModel(
     val error: State<String?> = _error
 
     private var currentPage = 1
-    // Almacena la lista de géneros del usuario para la paginación
     private var currentUserGenreIds: String = ""
 
-    // Mapeo solo de categorías de Películas
     private val categoryMap: Map<String, Category> = categoryServices.getCategories()
         .associateBy { it.categoryId }
 
-    /**
-     * Mapea los IDs de género de TMDB a objetos Category.
-     */
     private fun mapGenreIdsToCategories(genreIds: List<Int>): List<Category> {
         val defaultCategory = Category("0", "Otros", Icons.Default.Circle)
         return genreIds.mapNotNull { id ->
@@ -54,9 +48,7 @@ class VisualContentViewModel(
         }
     }
 
-    /**
-     * Mapea un objeto JSON a un objeto VisualContent (siempre tipo MOVIE).
-     */
+
     private fun mapJsonToVisualContent(itemObject: JSONObject): VisualContent {
         val genreIdsArray = itemObject.optJSONArray("genre_ids")
         val genreIds = mutableListOf<Int>()
@@ -79,24 +71,15 @@ class VisualContentViewModel(
         )
     }
 
-    // --- NUEVO MÉTODO DE CARGA BASADO EN PREFERENCIAS DEL USUARIO ---
 
-    /**
-     * Carga el contenido basado en las categorías guardadas por el usuario.
-     * ESTE DEBE SER EL MÉTODO LLAMADO DESDE LA VISTA INICIAL.
-     * @param userId El ID del usuario actual para buscar sus categorías.
-     * @param append Si es 'true', añade a la lista existente; si es 'false', la reemplaza.
-     */
+
     fun loadContentForUser(userId: String, append: Boolean = false) {
         viewModelScope.launch {
-            if (!append) currentPage = 1 // Resetea página para la primera carga
+            if (!append) currentPage = 1
 
             try {
                 if (!append || currentUserGenreIds.isEmpty()) {
-                    // 1. Obtener las categorías guardadas del usuario
                     val selectedCategories = userCategoriesService.getUserCategories(userId)
-
-                    // 2. Convertir a IDs de TMDB separados por comas
                     currentUserGenreIds = selectedCategories.joinToString(",") { it.categoryId }
                 }
 
@@ -106,7 +89,6 @@ class VisualContentViewModel(
                     return@launch
                 }
 
-                // 3. Llamar al cargador de la API con los géneros obtenidos
                 loadContentFromApi(currentUserGenreIds, append)
 
             } catch (e: Exception) {
@@ -118,9 +100,7 @@ class VisualContentViewModel(
         }
     }
 
-    /**
-     * Método interno que realiza la llamada a la API y actualiza el estado.
-     */
+
     private fun loadContentFromApi(filmGenres: String, append: Boolean) {
         viewModelScope.launch {
             try {
@@ -153,7 +133,6 @@ class VisualContentViewModel(
         }
     }
 
-    // --- Métodos de Favoritos (Añadidos en la revisión anterior) ---
 
     fun saveFavorite(content: VisualContent) {
         viewModelScope.launch {

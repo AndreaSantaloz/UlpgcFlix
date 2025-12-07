@@ -27,24 +27,20 @@ import coil.compose.rememberAsyncImagePainter
 import com.company.ulpgcflix.ui.theme.ColorFavoritos
 import com.company.ulpgcflix.ui.theme.ColorFavoritosDark
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore // ⚠️ NECESARIO para Firestore
+import com.google.firebase.firestore.FirebaseFirestore
 
-// --- Funciones de Lógica de Firestore (NUEVO) ---
+
 private const val FIRESTORE_COLLECTION_IMAGES = "images"
 private const val FIRESTORE_FIELD_URL = "urlImagen"
 
-/**
- * Guarda la URL de la imagen de perfil en Firestore.
- * El documento se crea/actualiza usando el UID del usuario como ID.
- */
+
 private fun saveProfileImageUrl(uid: String, url: String?, onComplete: (Boolean) -> Unit) {
     val db = FirebaseFirestore.getInstance()
     val data = hashMapOf(
         "uidUsuario" to uid,
-        FIRESTORE_FIELD_URL to (url ?: "") // Almacena un String vacío si es nulo
+        FIRESTORE_FIELD_URL to (url ?: "")
     )
 
-    // Usa el UID como ID del documento para facilitar la búsqueda
     db.collection(FIRESTORE_COLLECTION_IMAGES).document(uid)
         .set(data)
         .addOnSuccessListener {
@@ -57,23 +53,20 @@ private fun saveProfileImageUrl(uid: String, url: String?, onComplete: (Boolean)
         }
 }
 
-/**
- * Recupera la URL de la imagen de perfil desde Firestore.
- */
+
 private fun fetchProfileImageUrl(uid: String, onResult: (String?) -> Unit) {
     val db = FirebaseFirestore.getInstance()
     db.collection(FIRESTORE_COLLECTION_IMAGES).document(uid)
         .get()
         .addOnSuccessListener { document ->
             val url = document.getString(FIRESTORE_FIELD_URL)
-            onResult(url.takeIf { !it.isNullOrEmpty() }) // Devuelve null si no hay URL o está vacía
+            onResult(url.takeIf { !it.isNullOrEmpty() })
         }
         .addOnFailureListener { e ->
             println("Error al obtener la URL de perfil: $e")
             onResult(null)
         }
 }
-// --- Fin de Funciones de Lógica de Firestore ---
 
 
 @Composable
@@ -84,18 +77,13 @@ fun ProfileScreen(
     isEditing: Boolean,
     onSetEditing: (Boolean) -> Unit,
 ) {
-    // Ya no se utiliza SharedPreferences para la URL, pero se mantiene para el Context
     val context = LocalContext.current
     val firebaseUser = FirebaseAuth.getInstance().currentUser
     val uid = firebaseUser?.uid
-
-    // Estado local para la URL de la imagen de perfil. Inicialmente nulo.
     var profileImageUrlString by remember { mutableStateOf<String?>(null) }
-    // Indicador de carga para la lectura inicial de Firestore
     var isLoadingUrl by remember { mutableStateOf(true) }
 
 
-    // 1. Efecto para obtener la URL desde Firestore al cargar
     LaunchedEffect(uid) {
         if (uid != null) {
             fetchProfileImageUrl(uid) { url ->
@@ -103,7 +91,7 @@ fun ProfileScreen(
                 isLoadingUrl = false
             }
         } else {
-            isLoadingUrl = false // No hay usuario, no hay que cargar
+            isLoadingUrl = false
         }
     }
 
@@ -117,9 +105,6 @@ fun ProfileScreen(
     val isProfileOwner = true
     var aboutMeText by remember { mutableStateOf("Hola, soy un crítico de cine apasionado y me encantan las películas de ciencia ficción.") }
     val isDark = isSystemInDarkTheme()
-
-    // El valor inicial se toma del estado de Compose (profileImageUrlString),
-    // que se actualiza desde Firestore.
     var currentUrlInput by remember(isEditing, profileImageUrlString) {
         mutableStateOf(profileImageUrlString ?: "")
     }
@@ -141,7 +126,6 @@ fun ProfileScreen(
                 )
         ) {
 
-            // Muestra el indicador de carga si estamos esperando la URL de Firestore
             if (isLoadingUrl) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -150,7 +134,6 @@ fun ProfileScreen(
                     CircularProgressIndicator()
                 }
             } else if (!profileImageUrlString.isNullOrEmpty()) {
-                // Muestra la imagen si se cargó la URL
                 Image(
                     painter = rememberAsyncImagePainter(model = profileImageUrlString),
                     contentDescription = "Foto de perfil de $username",
@@ -160,7 +143,6 @@ fun ProfileScreen(
                         .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
                 )
             } else {
-                // Muestra el icono de Persona si no hay URL
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -178,7 +160,6 @@ fun ProfileScreen(
             }
 
 
-            // Iconos de navegación y ajustes (Se renderizan después, superponiéndose a la imagen)
             IconButton(
                 onClick = onVisualContent,
                 modifier = Modifier
@@ -233,7 +214,6 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         if (isProfileOwner && isEditing) {
-            // RAMA 1: MODO EDICIÓN
             OutlinedTextField(
                 value = aboutMeText,
                 onValueChange = { aboutMeText = it },
@@ -260,21 +240,17 @@ fun ProfileScreen(
             Button(
                 onClick = {
                     val newUrl = currentUrlInput.takeIf { it.isNotBlank() }
-                    profileImageUrlString = newUrl // Actualiza el estado local
-
-                    // 2. Guarda la URL en Firestore
+                    profileImageUrlString = newUrl
                     if (uid != null) {
                         saveProfileImageUrl(uid, newUrl) { success ->
                             if (success) {
-                                onSetEditing(false) // Solo desactiva la edición si el guardado fue exitoso
+                                onSetEditing(false)
                             } else {
-                                // Muestra un mensaje de error si el guardado falla
-                                // (Idealmente con un Snackbar o un Toast)
+
                                 println("Error al guardar la URL en la base de datos.")
                             }
                         }
                     } else {
-                        // Si no hay UID, simplemente desactiva la edición
                         onSetEditing(false)
                     }
 
@@ -288,7 +264,6 @@ fun ProfileScreen(
             }
 
         } else {
-            // RAMA 2: MODO VISTA
             Text(
                 text = aboutMeText,
                 fontSize = 16.sp,

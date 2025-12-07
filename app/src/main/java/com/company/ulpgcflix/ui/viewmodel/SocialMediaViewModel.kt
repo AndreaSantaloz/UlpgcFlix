@@ -29,7 +29,7 @@ class SocialMediaViewModel(
     private val SocialMediaService: SocialMediaService
 ) : ViewModel() {
 
-    // --- ESTADOS OBSERVABLES ---
+
     private val _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> = _searchText.asStateFlow()
 
@@ -44,14 +44,13 @@ class SocialMediaViewModel(
     private val _error = mutableStateOf<String?>(null)
     val error: State<String?> = _error
 
-    // 🟢 NUEVO ESTADO: IDs de los canales que el usuario sigue (Para persistencia)
     private val _followedChannelIds = MutableStateFlow<Set<String>>(emptySet())
     val followedChannelIds: StateFlow<Set<String>> = _followedChannelIds.asStateFlow()
 
-    // --- INICIALIZACIÓN ---
+
     init {
         loadChannels()
-        loadFollowedChannelIds() // 🟢 Cargamos los canales seguidos al iniciar
+        loadFollowedChannelIds()
         viewModelScope.launch {
             searchText.collect { text ->
                 filterChannels(text)
@@ -59,20 +58,12 @@ class SocialMediaViewModel(
         }
     }
 
-    // ===================================================
-    // 1. CARGA, BÚSQUEDA Y FILTRADO
-    // ===================================================
 
-    /**
-     * Actualiza el texto de búsqueda.
-     */
     fun onSearchTextChanged(text: String) {
         _searchText.value = text
     }
 
-    /**
-     * Carga todos los canales desde el servicio de Firebase.
-     */
+
     fun loadChannels() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -81,12 +72,10 @@ class SocialMediaViewModel(
                 val channelMaps = SocialMediaService.getChannels()
 
                 val channels = channelMaps.map { dataMap ->
-                    // Mapeo SEGURO
                     Group(
                         id = dataMap["id"] as? String ?: throw IllegalStateException("Canal sin ID de Firebase"),
                         name = dataMap["name"] as? String ?: "Nombre Desconocido",
                         description = dataMap["description"] as? String ?: "Sin descripción",
-                        // ⚠️ Usamos 'ownerId' del mapa para 'idowner'
                         idowner = dataMap["ownerId"] as? String ?: "Desconocido",
                         image = dataMap["image"] as? String ?: "",
                         isPublic = dataMap["isPublic"] as? Boolean ?: true,
@@ -94,7 +83,7 @@ class SocialMediaViewModel(
                 }
 
                 _allChannels.value = channels
-                filterChannels(_searchText.value) // Filtra después de cargar
+                filterChannels(_searchText.value)
 
             } catch (e: Exception) {
                 _error.value = "Error al cargar canales: ${e.message}"
@@ -104,14 +93,11 @@ class SocialMediaViewModel(
         }
     }
 
-    /**
-     * 🟢 NUEVA FUNCIÓN: Carga los IDs de los canales que el usuario actual sigue.
-     */
+
     fun loadFollowedChannelIds() {
         viewModelScope.launch {
             try {
-                // ⚠️ Se asume que SocialMediaService.getFollowedChannelIds() existe e interactúa con Firebase
-                // y devuelve una lista/set de IDs de String.
+
                 val followedIds = SocialMediaService.getFollowedChannelIds()
                 _followedChannelIds.value = followedIds.toSet()
             } catch (e: Exception) {
@@ -121,9 +107,7 @@ class SocialMediaViewModel(
     }
 
 
-    /**
-     * Filtra la lista de canales basándose en el query de búsqueda por nombre.
-     */
+
     private fun filterChannels(query: String) {
         if (query.isBlank()) {
             _visibleChannels.value = _allChannels.value
@@ -136,13 +120,7 @@ class SocialMediaViewModel(
         _visibleChannels.value = filteredList
     }
 
-    // ===================================================
-    // 2. OPERACIONES CRUD DE CANALES
-    // ===================================================
 
-    /**
-     * Crea un nuevo canal en Firebase.
-     */
     fun createChannel(name: String, description: String, isPublic: Boolean, onComplete: () -> Unit = {}) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -160,9 +138,7 @@ class SocialMediaViewModel(
         }
     }
 
-    /**
-     * Elimina un canal y actualiza la lista localmente.
-     */
+
     fun deleteChannel(group: Group) {
         val channelId = group.getId
         viewModelScope.launch {
@@ -183,9 +159,7 @@ class SocialMediaViewModel(
         }
     }
 
-    /**
-     * Actualiza la información de un canal.
-     */
+
     fun updateChannel(group: Group, updates: Map<String, Any>) {
         val channelId = group.getId
         viewModelScope.launch {
@@ -203,19 +177,12 @@ class SocialMediaViewModel(
     }
 
 
-    // ===================================================
-    // 3. SEGUIMIENTO (FOLLOW/UNFOLLOW)
-    // ===================================================
 
-    /**
-     * Permite al usuario seguir un canal y actualiza el estado local.
-     */
     fun followChannel(channelId: String) {
         viewModelScope.launch {
             _error.value = null
             try {
                 SocialMediaService.followChannel(channelId)
-                // 🟢 Actualiza el estado observable de IDs seguidos
                 _followedChannelIds.value = _followedChannelIds.value + channelId
 
             } catch (e: Exception) {
@@ -224,15 +191,12 @@ class SocialMediaViewModel(
         }
     }
 
-    /**
-     * Permite al usuario dejar de seguir un canal y actualiza el estado local.
-     */
+
     fun unfollowChannel(channelId: String) {
         viewModelScope.launch {
             _error.value = null
             try {
                 SocialMediaService.unfollowChannel(channelId)
-                // 🟢 Actualiza el estado observable de IDs seguidos
                 _followedChannelIds.value = _followedChannelIds.value - channelId
 
             } catch (e: Exception) {

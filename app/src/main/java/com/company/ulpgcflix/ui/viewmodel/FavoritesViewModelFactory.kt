@@ -1,6 +1,6 @@
 package com.company.ulpgcflix.ui.viewmodel
 
-import com.company.ulpgcflix.ui.servicios.FavoritesService // Asegúrate de que esta ruta es correcta
+import com.company.ulpgcflix.ui.servicios.FavoritesService
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -64,12 +64,9 @@ class FavoritesViewModel(
             _isLoading.value = true
             _error.value = null
             try {
-                // Llama al servicio que lee de Firestore y devuelve List<VisualContent>
                 val favoritesList = favoritesService.getFavorites()
-
                 _allFavorites.value = favoritesList
                 filterFavorites(_searchText.value)
-
             } catch (e: Exception) {
                 _error.value = "Error al cargar favoritos: ${e.message}"
             } finally {
@@ -90,7 +87,6 @@ class FavoritesViewModel(
         }
 
         val filteredList = _allFavorites.value.filter { content ->
-            // CORRECCIÓN: Usar content.title en lugar de content.getTitle
             content.getTitle.contains(query, ignoreCase = true)
         }
         _visibleFavorites.value = filteredList
@@ -100,11 +96,7 @@ class FavoritesViewModel(
     fun removeFavorite(content: VisualContent) {
         viewModelScope.launch {
             try {
-                // CORRECCIÓN 1: Llamar a removeFavorite pasando el objeto completo 'content',
-                // ya que el servicio lo espera.
                 favoritesService.removeFavorite(content)
-
-                // CORRECCIÓN 2: Usar content.id en lugar de content.getId para filtrar
                 val updatedList = _allFavorites.value.filter { it.getId != content.getId }
                 _allFavorites.value = updatedList
 

@@ -27,7 +27,6 @@ import com.company.ulpgcflix.model.VisualContent
 import com.company.ulpgcflix.ui.interfaces.ApiService
 import com.company.ulpgcflix.ui.servicios.CategoryServices
 import com.company.ulpgcflix.ui.servicios.VisualContentService
-// Asumo esta ruta, ajusta si FavoritesService está en otro lugar
 import com.company.ulpgcflix.ui.servicios.FavoritesService
 import com.company.ulpgcflix.ui.viewmodel.VisualContentViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -41,7 +40,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.Animatable
 import androidx.compose.ui.graphics.graphicsLayer
-import com.company.ulpgcflix.ui.servicios.UserCategoriesService // <-- IMPORT AÑADIDO
+import com.company.ulpgcflix.ui.servicios.UserCategoriesService
 import kotlin.math.roundToInt
 import kotlin.math.abs
 
@@ -51,7 +50,7 @@ class VisualContentViewModelFactory(
     private val categoryServices: CategoryServices,
     private val apiService: ApiService,
     private val favoritesService: FavoritesService,
-    private val userCategoriesService: UserCategoriesService // <-- AÑADIDO
+    private val userCategoriesService: UserCategoriesService
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(VisualContentViewModel::class.java)) {
@@ -61,7 +60,7 @@ class VisualContentViewModelFactory(
                 categoryServices,
                 apiService,
                 favoritesService,
-                userCategoriesService // <-- INYECTADO
+                userCategoriesService
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
@@ -104,7 +103,7 @@ fun SwipeableCard(
                 rotationZ = offsetX.value * rotationFactor,
                 alpha = 1f - (abs(offsetX.value) / swipeThreshold).coerceIn(0f, 1f)
             )
-            .pointerInput(item.getTitle) { // Usar item.title en lugar de item.getTitle
+            .pointerInput(item.getTitle) {
                 detectDragGestures(
                     onDragEnd = {
                         coroutineScope.launch {
@@ -138,7 +137,6 @@ fun SwipeableCard(
 
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
-                // Usar item.image y item.title
                 model = "https://image.tmdb.org/t/p/w500${item.getImage}",
                 contentDescription = item.getTitle,
                 modifier = Modifier.fillMaxSize(),
@@ -159,7 +157,6 @@ fun SwipeableCard(
                     color = Color.White
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                // Usar item.category y item.assessment
                 val primaryCategory = item.getCategory.firstOrNull()?.categoryName ?: "Sin Categoría"
                 Text(
                     text = primaryCategory,
@@ -193,7 +190,6 @@ fun VisualContent(
             FirebaseAuth.getInstance()
         )
     },
-    // 1. Instanciar UserCategoriesService
     userCategoriesService: UserCategoriesService = remember {
         UserCategoriesService()
     },
@@ -203,7 +199,7 @@ fun VisualContent(
             visualContentService = VisualContentService(RetrofitClient.apiService),
             categoryServices = CategoryServices(),
             favoritesService = favoritesService,
-            userCategoriesService = userCategoriesService // 2. Pasar a la Factory
+            userCategoriesService = userCategoriesService
         )
     )
 ) {
@@ -211,29 +207,21 @@ fun VisualContent(
     val scope = rememberCoroutineScope()
     var currentIndex by remember { mutableStateOf(0) }
     var viewCount by remember { mutableStateOf(0) }
-
-    // 3. Obtener el ID del usuario actual
     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-
-    // --- CORRECCIÓN CRÍTICA: Llamar a loadContentForUser con el ID ---
     LaunchedEffect(currentUserId) {
         if (currentUserId != null) {
-            // Carga el contenido usando las preferencias guardadas del usuario
             viewModel.loadContentForUser(currentUserId, append = false)
         } else {
-            // Manejar caso donde no hay usuario logueado
-            // Opcional: viewModel.error.value = "Debes iniciar sesión para ver recomendaciones."
+
         }
     }
 
-    // Lógica para avanzar la tarjeta al hacer "dislike"
     val handleDislikeAction: () -> Unit = {
         scope.launch {
             viewCount++
-            // Recarga usando las categorías del usuario si corresponde
             if (viewCount >= 10 && contenido.isNotEmpty() && currentUserId != null) {
                 viewModel.loadContentForUser(currentUserId, append = true)
-                viewCount = 0 // Reinicia el contador después de la recarga
+                viewCount = 0
             }
             if (contenido.isNotEmpty()) {
                 currentIndex = (currentIndex + 1) % contenido.size
@@ -241,15 +229,13 @@ fun VisualContent(
         }
     }
 
-    // Lógica para guardar favorito y avanzar la tarjeta al hacer "like"
     val handleLikeAction: (VisualContent) -> Unit = { item ->
         scope.launch {
             viewModel.saveFavorite(item)
             viewCount++
-            // Recarga usando las categorías del usuario si corresponde
             if (viewCount >= 10 && contenido.isNotEmpty() && currentUserId != null) {
                 viewModel.loadContentForUser(currentUserId, append = true)
-                viewCount = 0 // Reinicia el contador después de la recarga
+                viewCount = 0
             }
             if (contenido.isNotEmpty()) {
                 currentIndex = (currentIndex + 1) % contenido.size
@@ -264,7 +250,7 @@ fun VisualContent(
             .padding(horizontal=16.dp,vertical=8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // ... (Controles de Cabecera)
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -308,8 +294,6 @@ fun VisualContent(
         viewModel.error.value?.let {
             Text(it, color = Color.Red, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 8.dp))
         }
-
-        // --- Lógica para mostrar la tarjeta ---
         if (contenido.isNotEmpty() && currentIndex < contenido.size) {
             val item: VisualContent = contenido[currentIndex]
 
@@ -324,7 +308,6 @@ fun VisualContent(
             )
 
             Spacer(Modifier.height(24.dp))
-            // ... (Controles Inferiores)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround,
@@ -356,7 +339,6 @@ fun VisualContent(
             Spacer(Modifier.height(16.dp))
 
         } else if (viewModel.error.value == null && currentUserId != null) {
-            // Muestra indicador de carga si hay usuario y la lista está vacía
             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator()
@@ -364,12 +346,10 @@ fun VisualContent(
                 }
             }
         } else if (currentUserId == null) {
-            // Muestra mensaje si no hay usuario logueado
             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text("Inicia sesión para ver tus recomendaciones personalizadas.", textAlign = TextAlign.Center)
             }
         } else if (contenido.isEmpty() && viewModel.error.value == null) {
-            // Caso para cuando no se encuentra contenido después de la carga
             Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Text("No se encontraron películas. Intenta más tarde.", textAlign = TextAlign.Center)
             }

@@ -58,7 +58,7 @@ fun Setting(
             SettingItem(
                 title = "Editar Perfil",
                 icon = Icons.Default.Person,
-                onClick = onEditProfile // Llama al callback implementado en NavGraph
+                onClick = onEditProfile
             )
 
             SettingItem(

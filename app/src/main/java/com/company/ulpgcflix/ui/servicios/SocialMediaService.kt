@@ -21,13 +21,7 @@ class SocialMediaService(
         return auth.currentUser?.uid ?: throw Exception("Usuario no autenticado. Inicie sesión.")
     }
 
-    // ===================================================
-    // 1. GESTIÓN DE CANALES: CREAR, ELIMINAR, ACTUALIZAR, VER
-    // ===================================================
 
-    /**
-     * ➕ CREAR CANAL: Crea un nuevo canal y retorna su ID.
-     */
     suspend fun createChannel(name: String, description: String, isPublic: Boolean): String =
         suspendCancellableCoroutine { continuation ->
             val userId = getUserId()
@@ -51,28 +45,24 @@ class SocialMediaService(
             )
         }
 
-    /**
-     * ❌ ELIMINAR CANAL: Elimina un canal por su ID (ID de documento de Firebase).
-     */
+
     suspend fun deleteChannel(channelId: String) {
         suspendCancellableCoroutine { continuation ->
             firebaseService.deleteDocument(
                 collectionPath = CHANNELS_PATH,
-                documentId = channelId,        // <-- Usa el ID de Firebase proporcionado
+                documentId = channelId,
                 onSuccess = { continuation.resume(Unit) },
                 onFailure = { continuation.resumeWithException(it) }
             )
         }
     }
 
-    /**
-     * 📝 ACTUALIZAR CANAL: Actualiza campos específicos de un canal usando su ID de Firebase.
-     */
+
     suspend fun updateChannel(channelId: String, updates: Map<String, Any>) {
         suspendCancellableCoroutine { continuation ->
             firebaseService.updateDocument(
                 collectionPath = CHANNELS_PATH,
-                documentId = channelId,        // <-- Usa el ID de Firebase proporcionado
+                documentId = channelId,
                 updates = updates,
                 onSuccess = { continuation.resume(Unit) },
                 onFailure = { continuation.resumeWithException(it) }
@@ -80,9 +70,7 @@ class SocialMediaService(
         }
     }
 
-    /**
-     * 👀 VER CANAL (individual): Obtiene los datos de un canal específico.
-     */
+
     suspend fun getChannel(channelId: String): Map<String, Any>? =
         suspendCancellableCoroutine { continuation ->
             firebaseService.readDocument(
@@ -97,15 +85,12 @@ class SocialMediaService(
             )
         }
 
-    /**
-     * 🔭 VER CANALES (todos): Obtiene todos los canales, INCLUYENDO EL ID DE FIREBASE.
-     */
+
     suspend fun getChannels(): List<Map<String, Any>> =
         suspendCancellableCoroutine { continuation ->
             firebaseService.readCollection(
                 collectionPath = CHANNELS_PATH,
                 onSuccess = { querySnapshot ->
-                    // Mapeo crucial: Añade el ID del documento ('it.id') al mapa de datos con la clave "id"
                     val channelsList = querySnapshot.documents.mapNotNull {
                         it.data?.plus("id" to it.id)
                     }
@@ -117,9 +102,7 @@ class SocialMediaService(
             )
         }
 
-    /**
-     * 🔎 BUSCAR CANAL: Obtiene todos los canales y realiza un filtrado básico en memoria.
-     */
+
     suspend fun searchChannels(query: String): List<Map<String, Any>> {
         val allChannels = getChannels()
         if (query.isBlank()) return allChannels
@@ -129,10 +112,6 @@ class SocialMediaService(
             name.contains(query, ignoreCase = true)
         }
     }
-
-    // ===================================================
-    // 2. SEGUIMIENTO DE CANALES: SEGUIR, DEJAR DE SEGUIR Y OBTENER SEGUIDOS
-    // ===================================================
 
 
     suspend fun getFollowedChannelIds(): Set<String> =
@@ -154,9 +133,6 @@ class SocialMediaService(
             )
         }
 
-    /**
-     * ✅ SEGUIR CANAL: Crea un documento de membresía con un ID compuesto ("userId_channelId").
-     */
     suspend fun followChannel(channelId: String) {
         val userId = getUserId()
         val membershipId = "${userId}_$channelId"
@@ -170,19 +146,17 @@ class SocialMediaService(
             firebaseService.createDocument(
                 collectionPath = CHANNEL_MEMBERS_PATH,
                 data = membershipData,
-                documentId = membershipId, // Fuerza un ID para facilitar el seguimiento/dejar de seguir
+                documentId = membershipId,
                 onSuccess = { continuation.resume(Unit) },
                 onFailure = { continuation.resumeWithException(it) }
             )
         }
     }
 
-    /**
-     * 💔 DEJAR DE SEGUIR CANAL: Elimina el documento de membresía.
-     */
+
     suspend fun unfollowChannel(channelId: String) {
         val userId = getUserId()
-        val membershipId = "${userId}_$channelId" // Usamos el ID compuesto para la eliminación
+        val membershipId = "${userId}_$channelId"
 
         suspendCancellableCoroutine { continuation ->
             firebaseService.deleteDocument(

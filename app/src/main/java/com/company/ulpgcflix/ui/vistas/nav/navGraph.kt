@@ -37,7 +37,6 @@ fun NavigationGraph(
         )
     }
 
-    // ESTADO ELEVADO: Controla si el perfil está en modo edición.
     var isEditingProfile by remember { mutableStateOf(false) }
 
     NavHost(navController = navController, startDestination = Screen.Onboarding.route) {
@@ -57,22 +56,16 @@ fun NavigationGraph(
             )
         }
 
-        // DESTINO DE CATEGORÍAS (Manejo de Modo Edición vs. Modo Registro)
         composable(Screen.Categories.route) {
-            // Determinamos si es Modo Edición comprobando si la ruta anterior NO fue la de Registro.
             val isEditMode = navController.previousBackStackEntry?.destination?.route != Screen.Register.route
 
             Categories(
                 isEditMode = isEditMode,
-                // El botón de retroceso (visible en modo edición) simplemente vuelve a la pantalla anterior.
                 onBack = { navController.popBackStack() },
-                // La acción principal al seleccionar las categorías
                 onCategoriesSelected = {
                     if (isEditMode) {
-                        // Si se está editando, solo vuelve a la pantalla anterior (Setting)
                         navController.popBackStack()
                     } else {
-                        // Si es el registro inicial, navega a la pantalla principal y limpia el stack.
                         navController.navigate(Screen.VisualContent.route) {
                             popUpTo(Screen.Categories.route) { inclusive = true }
                         }
@@ -91,13 +84,11 @@ fun NavigationGraph(
         composable(Screen.Profile.route) {
             ProfileScreen (
                 onSettings = { navController.navigate(Screen.Setting.route) },
-                // Al volver a VisualContent, aseguramos que el modo edición se desactive.
                 onVisualContent = {
                     isEditingProfile = false
                     navController.popBackStack()
                 },
                 onGoToFavorites = { navController.navigate(Screen.FavouriteVisualContent.route) },
-                // PASAR ESTADO Y SETTER
                 isEditing = isEditingProfile,
                 onSetEditing = { isEditingProfile = it }
             )
@@ -106,18 +97,15 @@ fun NavigationGraph(
         composable(Screen.Setting.route) {
             Setting(
                 onNavigateBack = {
-                    // Limpia el estado de edición al retroceder si el destino era Profile
                     if (navController.previousBackStackEntry?.destination?.route == Screen.Profile.route) {
                         isEditingProfile = false
                     }
                     navController.popBackStack()
                 },
-                // Navega a ProfileScreen en modo edición.
                 onEditProfile = {
                     isEditingProfile = true
                     navController.navigate(Screen.Profile.route)
                 },
-                // Navega a Categories en modo edición.
                 onEditPreferences = { navController.navigate(Screen.Categories.route) },
                 onToggleDarkMode = onToggleDarkMode,
                 isDarkModeEnabled = isDarkModeEnabled,
