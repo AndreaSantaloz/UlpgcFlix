@@ -1,6 +1,5 @@
 package com.company.ulpgcflix.ui.vistas.SocialMedia
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -29,7 +28,6 @@ import androidx.compose.ui.text.style.TextOverflow
 fun SocialMedia(
     onNavigateBack: () -> Unit,
     onNavigateToCreateChannel: () -> Unit,
-    onChannelDialog: (channelId: String) -> Unit,
     socialMediaService: SocialMediaService = remember {
         SocialMediaService(
             firebaseService = com.company.ulpgcflix.firebase.FirebaseFirestore(),
@@ -44,52 +42,37 @@ fun SocialMedia(
     val searchText by viewModel.searchText.collectAsState()
     val isLoading by viewModel.isLoading
     val error by viewModel.error
-    val channelsList by viewModel.visibleChannels // Lista de canales visibles/filtrados por búsqueda
-
-    // 🟢 OBTENEMOS la lista de IDs de canales seguidos del ViewModel (Ahora persistente)
+    val channelsList by viewModel.visibleChannels
     val followedChannelIds by viewModel.followedChannelIds.collectAsState()
-
-    // --- Lógica para separar los canales ---
     val userId = FirebaseAuth.getInstance().currentUser?.uid
-
-    // 1. Canales Creados (createdChannels): Siempre se muestran si pasan el filtro de búsqueda.
     val createdChannels = remember(channelsList, userId) {
         if (userId != null) {
             channelsList.filter { it.getIdOwner == userId }
         } else emptyList()
     }
-
-    // 2. Canales Suscritos (subscribedChannels): Canales que el usuario ya sigue. Siempre visibles.
     val subscribedChannels = remember(channelsList, userId, followedChannelIds, searchText) {
         if (userId == null) return@remember emptyList()
 
-        // Canales que están en la lista de seguidos Y no son creados por el usuario
         val followed = channelsList.filter { followedChannelIds.contains(it.getId) && it.getIdOwner != userId }
-
-        // Si hay texto en el buscador, filtramos estos canales seguidos también
         if (searchText.isNotEmpty()) {
             followed.filter {
                 it.getName.contains(searchText, ignoreCase = true) ||
                         it.getDescription.contains(searchText, ignoreCase = true)
             }
         } else {
-            // Si el buscador está vacío, mostramos todos los seguidos
             followed
         }
     }
 
 
-    // 3. Canales para Seguir (availableToFollow): Solo aparecen si el campo de búsqueda tiene texto
-    // y no están ya seguidos o creados por mí.
     val availableChannelsToFollow = remember(channelsList, userId, followedChannelIds, searchText) {
         if (userId != null && searchText.isNotEmpty()) {
-            // Canales que cumplen el filtro de búsqueda, no son míos, y NO están seguidos.
             channelsList.filter {
                 it.getIdOwner != userId && !followedChannelIds.contains(it.getId)
             }
         } else emptyList()
     }
-    // ---------------------------------------
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -98,7 +81,7 @@ fun SocialMedia(
                 .padding(16.dp)
         ) {
 
-            // --- Encabezado ---
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -118,7 +101,6 @@ fun SocialMedia(
                 )
             }
 
-            // --- Campo de Búsqueda ---
             OutlinedTextField(
                 value = searchText,
                 onValueChange = viewModel::onSearchTextChanged,
@@ -138,7 +120,6 @@ fun SocialMedia(
                 singleLine = true
             )
 
-            // --- Indicador de Carga y Error ---
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             }
@@ -146,7 +127,6 @@ fun SocialMedia(
                 Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 8.dp))
             }
 
-            // --- Lista de Canales Separada ---
             if (!isLoading) {
                 val hasContent = createdChannels.isNotEmpty() || subscribedChannels.isNotEmpty() || (availableChannelsToFollow.isNotEmpty() && searchText.isNotEmpty())
 
@@ -159,7 +139,6 @@ fun SocialMedia(
                         contentPadding = PaddingValues(vertical = 8.dp)
                     ) {
 
-                        // 1. CANALES CREADOS POR EL USUARIO
                         if (createdChannels.isNotEmpty()) {
                             item {
                                 SectionHeader(title = "🚀 Mis Canales Creados")
@@ -169,7 +148,6 @@ fun SocialMedia(
                                     channel = channel,
                                     onFollowClick = { /* No aplica */ },
                                     onUnfollowClick = { /* No aplica */ },
-                                    onChannelClick = { onChannelDialog(channel.getId) },
                                     onDeleteClick = { viewModel.deleteChannel(channel) },
                                     showFollowButton = false,
                                     isCreator = true,
@@ -181,7 +159,6 @@ fun SocialMedia(
                             }
                         }
 
-                        // 2. CANALES SEGUIDOS (Persistentes)
                         if (subscribedChannels.isNotEmpty()) {
                             item {
                                 SectionHeader(title = "✅ Canales Suscritos")
@@ -192,7 +169,6 @@ fun SocialMedia(
                                     // 🟢 Las acciones llaman al VM, que actualiza el estado persistente.
                                     onFollowClick = { viewModel.followChannel(channel.getId) },
                                     onUnfollowClick = { viewModel.unfollowChannel(channel.getId) },
-                                    onChannelClick = { onChannelDialog(channel.getId) },
                                     onDeleteClick = { /* No aplica */ },
                                     showFollowButton = true,
                                     isCreator = false,
@@ -205,7 +181,6 @@ fun SocialMedia(
                         }
 
 
-                        // 3. CANALES PARA SEGUIR (Solo búsqueda)
                         if (availableChannelsToFollow.isNotEmpty()) {
                             item {
                                 SectionHeader(title = "✨ Canales a Seguir (Resultados de Búsqueda)")
@@ -213,10 +188,8 @@ fun SocialMedia(
                             items(availableChannelsToFollow, key = { it.getId + "_available" }) { channel ->
                                 ChannelCard(
                                     channel = channel,
-                                    // 🟢 Al seguir, el VM actualiza el estado.
                                     onFollowClick = { viewModel.followChannel(channel.getId) },
                                     onUnfollowClick = { /* No aplica */ },
-                                    onChannelClick = { onChannelDialog(channel.getId) },
                                     onDeleteClick = { /* No aplica */ },
                                     showFollowButton = true,
                                     isCreator = false,
@@ -264,7 +237,6 @@ fun ChannelCard(
     onFollowClick: () -> Unit,
     onUnfollowClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onChannelClick: (channelId: String) -> Unit,
     showFollowButton: Boolean,
     isCreator: Boolean,
     isFollowing: Boolean
@@ -272,8 +244,7 @@ fun ChannelCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clickable(onClick = { onChannelClick(channel.getId) }),
+            .padding(vertical = 8.dp),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
@@ -313,7 +284,6 @@ fun ChannelCard(
                 )
             }
 
-            // --- Botón Seguir/Siguiendo (Condicional) ---
             if (showFollowButton) {
                 val onClickAction = if (isFollowing) onUnfollowClick else onFollowClick
                 val buttonText = if (isFollowing) "Siguiendo" else "Seguir"
@@ -329,7 +299,6 @@ fun ChannelCard(
                 Spacer(modifier = Modifier.width(8.dp))
             }
 
-            // --- Botón Eliminar (Condicional) ---
             if (isCreator) {
                 IconButton(onClick = onDeleteClick) {
                     Icon(

@@ -6,6 +6,5 @@ data class User(
     private final val name: String,
     private final val email:String,
     private final val password: String,
-    private final val permission: Permission,
     private val isPublic:Boolean=false,
 )

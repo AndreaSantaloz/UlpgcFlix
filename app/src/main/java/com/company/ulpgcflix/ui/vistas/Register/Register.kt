@@ -1,4 +1,4 @@
-package com.company.ulpgcflix.ui.vistas.login
+package com.company.ulpgcflix.ui.vistas.Register
 
 import android.annotation.SuppressLint
 import android.widget.Toast
@@ -26,47 +26,49 @@ import com.company.ulpgcflix.firebase.FirebaseAuthentication
 import com.company.ulpgcflix.R
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-fun LoginScreen(
-    onRegisterClick: () -> Unit,
-    onLoginSuccess: () -> Unit
+fun RegistroScreen(
+    onRegisterSuccess: () -> Unit
 ) {
-    var email by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") } // Renombrado de gMail a email
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val firebaseAuthentication = remember { FirebaseAuthentication() }
-    var loginAttemptResult by remember { mutableStateOf<Result<String>?>(null) }
+    var registerAttemptResult by remember { mutableStateOf<Result<String>?>(null) }
 
-    LaunchedEffect(loginAttemptResult) {
-        loginAttemptResult?.let { result ->
+
+    LaunchedEffect(registerAttemptResult) {
+        registerAttemptResult?.let { result ->
             isLoading = false
 
             result.onSuccess {
-                Toast.makeText(context, "Inicio de sesión exitoso.", Toast.LENGTH_SHORT).show()
-                onLoginSuccess()
+
+                Toast.makeText(context, "¡Registro exitoso! Ya puedes iniciar sesión.", Toast.LENGTH_LONG).show()
+                onRegisterSuccess()
             }.onFailure { error ->
-                Toast.makeText(context, error.message, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Error de registro: ${error.message}", Toast.LENGTH_LONG).show()
             }
-            loginAttemptResult = null
+            registerAttemptResult = null
         }
     }
 
-    val attemptLogin: () -> Unit = {
+    val attemptRegister: () -> Unit = {
         if (email.isNotBlank() && password.isNotBlank()) {
             isLoading = true
 
-            firebaseAuthentication.LoginUser(email, password, object : AuthCallback {
+            firebaseAuthentication.RegisterUser(email, password, object : AuthCallback {
                 override fun onSuccess(message: String) {
-                    loginAttemptResult = Result.success(message)
+                    registerAttemptResult = Result.success(message)
                 }
 
                 override fun onFailure(errorMessage: String) {
-                    loginAttemptResult = Result.failure(Exception(errorMessage))
+                    registerAttemptResult = Result.failure(Exception(errorMessage))
                 }
             })
         } else {
-            Toast.makeText(context, "Por favor, introduce tu email y contraseña.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Por favor, completa los campos de correo y contraseña.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -78,7 +80,6 @@ fun LoginScreen(
     ) {
         val screenWidth = maxWidth
         val screenHeight = maxHeight
-
 
         Canvas(
             modifier = Modifier
@@ -123,7 +124,7 @@ fun LoginScreen(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Iniciar\nsesión",
+                        text = "Crear\ncuenta",
                         fontSize = (screenWidth.value * 0.06).sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF2D2D2D)
@@ -137,7 +138,6 @@ fun LoginScreen(
                 }
             }
 
-
             Spacer(modifier = Modifier.height(screenHeight * 0.05f))
 
             Column(
@@ -147,11 +147,10 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .weight(1f)
             ) {
-
                 OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email (Usuario)") },
+                    value = username,
+                    onValueChange = { username = it },
+                    label = { Text("Usuario") },
                     shape = RoundedCornerShape(50),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -162,8 +161,23 @@ fun LoginScreen(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(26.dp))
 
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Correo") },
+                    shape = RoundedCornerShape(50),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedContainerColor = Color.White,
+                        focusedBorderColor = Color(0xFF2D2D2D),
+                        unfocusedBorderColor = Color.Transparent
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(26.dp))
 
                 OutlinedTextField(
                     value = password,
@@ -180,22 +194,11 @@ fun LoginScreen(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                TextButton(onClick = { /* TODO */ }) {
-                    Text("¿Olvidaste la contraseña?", color = Color.Gray, fontSize = 13.sp)
-                }
-
-                TextButton(onClick = {onRegisterClick() }) {
-                    Text("Crear cuenta", color = Color.Gray, fontSize = 13.sp)
-                }
-
                 Spacer(modifier = Modifier.height(24.dp))
 
-
                 Button(
-                    onClick = attemptLogin,
-                    enabled = !isLoading,
+                    onClick = attemptRegister,
+                    enabled = !isLoading, // Deshabilita mientras carga
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D2D2D)),
                     modifier = Modifier
@@ -203,13 +206,16 @@ fun LoginScreen(
                         .height(screenHeight * 0.07f)
                 ) {
                     if (isLoading) {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
                     } else {
-                        Text("Confirmar", color = Color.White)
+                        Text("Registrarse", color = Color.White)
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
                             imageVector = Icons.Default.ArrowForward,
-                            contentDescription = "Confirmar",
+                            contentDescription = "Registrarse",
                             tint = Color.White
                         )
                     }

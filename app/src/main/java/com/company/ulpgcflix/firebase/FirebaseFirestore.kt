@@ -37,8 +37,6 @@ class FirebaseFirestore {
         onFailure: (Exception) -> Unit
     ) {
         val collectionRef = database.collection(collectionPath)
-
-        // Aplica el filtro/ordenación definido en la lambda 'query' y luego ejecuta la lectura
         query(collectionRef).get()
             .addOnSuccessListener(onSuccess)
             .addOnFailureListener(onFailure)

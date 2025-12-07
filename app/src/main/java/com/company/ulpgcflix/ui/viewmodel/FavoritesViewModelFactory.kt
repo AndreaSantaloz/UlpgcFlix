@@ -1,6 +1,6 @@
 package com.company.ulpgcflix.ui.viewmodel
 
-import FavoritesService
+import com.company.ulpgcflix.ui.servicios.FavoritesService // Asegúrate de que esta ruta es correcta
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -58,7 +58,6 @@ class FavoritesViewModel(
 
     /**
      * Carga los favoritos utilizando el nuevo método del servicio.
-     * El mapeo a VisualContent se realiza ahora en la capa Service.
      */
     fun loadFavorites() {
         viewModelScope.launch {
@@ -67,9 +66,6 @@ class FavoritesViewModel(
             try {
                 // Llama al servicio que lee de Firestore y devuelve List<VisualContent>
                 val favoritesList = favoritesService.getFavorites()
-
-                // Ya no necesitamos la lógica compleja de mapeo manual
-                // que existía antes para 'getFavoritesMap()'.
 
                 _allFavorites.value = favoritesList
                 filterFavorites(_searchText.value)
@@ -94,7 +90,7 @@ class FavoritesViewModel(
         }
 
         val filteredList = _allFavorites.value.filter { content ->
-            // Se asume que content.getTitle es la forma correcta de acceder al título.
+            // CORRECCIÓN: Usar content.title en lugar de content.getTitle
             content.getTitle.contains(query, ignoreCase = true)
         }
         _visibleFavorites.value = filteredList
@@ -104,10 +100,14 @@ class FavoritesViewModel(
     fun removeFavorite(content: VisualContent) {
         viewModelScope.launch {
             try {
-                // removeFavorite sigue funcionando igual
-                favoritesService.removeFavorite(content.getId)
+                // CORRECCIÓN 1: Llamar a removeFavorite pasando el objeto completo 'content',
+                // ya que el servicio lo espera.
+                favoritesService.removeFavorite(content)
+
+                // CORRECCIÓN 2: Usar content.id en lugar de content.getId para filtrar
                 val updatedList = _allFavorites.value.filter { it.getId != content.getId }
                 _allFavorites.value = updatedList
+
                 filterFavorites(_searchText.value)
                 _error.value = null
             } catch (e: Exception) {
@@ -115,5 +115,4 @@ class FavoritesViewModel(
             }
         }
     }
-
 }

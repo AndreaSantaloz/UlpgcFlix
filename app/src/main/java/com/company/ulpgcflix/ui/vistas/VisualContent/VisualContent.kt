@@ -27,7 +27,8 @@ import com.company.ulpgcflix.model.VisualContent
 import com.company.ulpgcflix.ui.interfaces.ApiService
 import com.company.ulpgcflix.ui.servicios.CategoryServices
 import com.company.ulpgcflix.ui.servicios.VisualContentService
-import FavoritesService
+// Asumo esta ruta, ajusta si FavoritesService está en otro lugar
+import com.company.ulpgcflix.ui.servicios.FavoritesService
 import com.company.ulpgcflix.ui.viewmodel.VisualContentViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.Animatable
 import androidx.compose.ui.graphics.graphicsLayer
+import com.company.ulpgcflix.ui.servicios.UserCategoriesService // <-- IMPORT AÑADIDO
 import kotlin.math.roundToInt
 import kotlin.math.abs
 
@@ -48,7 +50,8 @@ class VisualContentViewModelFactory(
     private val visualContentService: VisualContentService,
     private val categoryServices: CategoryServices,
     private val apiService: ApiService,
-    private val favoritesService: FavoritesService
+    private val favoritesService: FavoritesService,
+    private val userCategoriesService: UserCategoriesService // <-- AÑADIDO
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(VisualContentViewModel::class.java)) {
@@ -57,7 +60,8 @@ class VisualContentViewModelFactory(
                 visualContentService,
                 categoryServices,
                 apiService,
-                favoritesService
+                favoritesService,
+                userCategoriesService // <-- INYECTADO
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
@@ -95,30 +99,24 @@ fun SwipeableCard(
 
     Card(
         modifier = modifier
-
             .offset { IntOffset(offsetX.value.roundToInt(), 0) }
             .graphicsLayer(
                 rotationZ = offsetX.value * rotationFactor,
                 alpha = 1f - (abs(offsetX.value) / swipeThreshold).coerceIn(0f, 1f)
             )
-
-            .pointerInput(item.getTitle) {
+            .pointerInput(item.getTitle) { // Usar item.title en lugar de item.getTitle
                 detectDragGestures(
                     onDragEnd = {
-
                         coroutineScope.launch {
                             when {
-
                                 offsetX.value > swipeThreshold -> {
                                     offsetX.animateTo(targetValue = size.width.toFloat() * 1.5f, animationSpec = tween(300))
                                     onSwipeRight()
                                 }
-
                                 offsetX.value < -swipeThreshold -> {
                                     offsetX.animateTo(targetValue = -size.width.toFloat() * 1.5f, animationSpec = tween(300))
                                     onSwipeLeft()
                                 }
-
                                 else -> {
                                     offsetX.animateTo(0f, tween(300))
                                 }
@@ -140,10 +138,12 @@ fun SwipeableCard(
 
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
+                // Usar item.image y item.title
                 model = "https://image.tmdb.org/t/p/w500${item.getImage}",
                 contentDescription = item.getTitle,
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+
             )
             Column(
                 modifier = Modifier
@@ -159,6 +159,7 @@ fun SwipeableCard(
                     color = Color.White
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+                // Usar item.category y item.assessment
                 val primaryCategory = item.getCategory.firstOrNull()?.categoryName ?: "Sin Categoría"
                 Text(
                     text = primaryCategory,
@@ -192,12 +193,17 @@ fun VisualContent(
             FirebaseAuth.getInstance()
         )
     },
+    // 1. Instanciar UserCategoriesService
+    userCategoriesService: UserCategoriesService = remember {
+        UserCategoriesService()
+    },
     viewModel: VisualContentViewModel = viewModel(
         factory = VisualContentViewModelFactory(
             apiService = RetrofitClient.apiService,
             visualContentService = VisualContentService(RetrofitClient.apiService),
             categoryServices = CategoryServices(),
-            favoritesService = favoritesService
+            favoritesService = favoritesService,
+            userCategoriesService = userCategoriesService // 2. Pasar a la Factory
         )
     )
 ) {
@@ -206,32 +212,46 @@ fun VisualContent(
     var currentIndex by remember { mutableStateOf(0) }
     var viewCount by remember { mutableStateOf(0) }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadContent("28,12", "10759,16", append = false)
+    // 3. Obtener el ID del usuario actual
+    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+
+    // --- CORRECCIÓN CRÍTICA: Llamar a loadContentForUser con el ID ---
+    LaunchedEffect(currentUserId) {
+        if (currentUserId != null) {
+            // Carga el contenido usando las preferencias guardadas del usuario
+            viewModel.loadContentForUser(currentUserId, append = false)
+        } else {
+            // Manejar caso donde no hay usuario logueado
+            // Opcional: viewModel.error.value = "Debes iniciar sesión para ver recomendaciones."
+        }
     }
 
+    // Lógica para avanzar la tarjeta al hacer "dislike"
     val handleDislikeAction: () -> Unit = {
         scope.launch {
             viewCount++
-            if (viewCount >= 10) {
-                viewModel.loadContent("28,12", "10759,16", append = true)
-                currentIndex = (currentIndex + 1) % contenido.size
-                viewCount = 0
-            } else {
+            // Recarga usando las categorías del usuario si corresponde
+            if (viewCount >= 10 && contenido.isNotEmpty() && currentUserId != null) {
+                viewModel.loadContentForUser(currentUserId, append = true)
+                viewCount = 0 // Reinicia el contador después de la recarga
+            }
+            if (contenido.isNotEmpty()) {
                 currentIndex = (currentIndex + 1) % contenido.size
             }
         }
     }
 
+    // Lógica para guardar favorito y avanzar la tarjeta al hacer "like"
     val handleLikeAction: (VisualContent) -> Unit = { item ->
         scope.launch {
             viewModel.saveFavorite(item)
             viewCount++
-            if (viewCount >= 10) {
-                viewModel.loadContent("28,12", "10759,16", append = true)
-                currentIndex = (currentIndex + 1) % contenido.size
-                viewCount = 0
-            } else {
+            // Recarga usando las categorías del usuario si corresponde
+            if (viewCount >= 10 && contenido.isNotEmpty() && currentUserId != null) {
+                viewModel.loadContentForUser(currentUserId, append = true)
+                viewCount = 0 // Reinicia el contador después de la recarga
+            }
+            if (contenido.isNotEmpty()) {
                 currentIndex = (currentIndex + 1) % contenido.size
             }
         }
@@ -244,6 +264,7 @@ fun VisualContent(
             .padding(horizontal=16.dp,vertical=8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // ... (Controles de Cabecera)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -264,7 +285,7 @@ fun VisualContent(
                 )
             }
             Text(
-                text = "Recomendaciones",
+                text = "Recomendaciones de Películas",
                 fontWeight = FontWeight.Bold,
                 fontSize = 22.sp,
                 textAlign = TextAlign.Center,
@@ -287,9 +308,10 @@ fun VisualContent(
         viewModel.error.value?.let {
             Text(it, color = Color.Red, textAlign = TextAlign.Center, modifier = Modifier.padding(bottom = 8.dp))
         }
+
+        // --- Lógica para mostrar la tarjeta ---
         if (contenido.isNotEmpty() && currentIndex < contenido.size) {
             val item: VisualContent = contenido[currentIndex]
-
 
             SwipeableCard(
                 item = item,
@@ -302,12 +324,12 @@ fun VisualContent(
             )
 
             Spacer(Modifier.height(24.dp))
+            // ... (Controles Inferiores)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 FloatingActionButton(onClick = handleDislikeAction, containerColor = Color.Red) {
                     Icon(
                         imageVector = Icons.Default.Cancel,
@@ -333,9 +355,24 @@ fun VisualContent(
 
             Spacer(Modifier.height(16.dp))
 
-        } else if (viewModel.error.value == null && contenido.isEmpty()) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            Text("Cargando películas y series...", modifier = Modifier.padding(top = 16.dp))
+        } else if (viewModel.error.value == null && currentUserId != null) {
+            // Muestra indicador de carga si hay usuario y la lista está vacía
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator()
+                    Text("Cargando películas...", modifier = Modifier.padding(top = 16.dp))
+                }
+            }
+        } else if (currentUserId == null) {
+            // Muestra mensaje si no hay usuario logueado
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text("Inicia sesión para ver tus recomendaciones personalizadas.", textAlign = TextAlign.Center)
+            }
+        } else if (contenido.isEmpty() && viewModel.error.value == null) {
+            // Caso para cuando no se encuentra contenido después de la carga
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text("No se encontraron películas. Intenta más tarde.", textAlign = TextAlign.Center)
+            }
         }
     }
 }

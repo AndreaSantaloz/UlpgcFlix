@@ -9,9 +9,11 @@ data class FavoriteContentMetadata(
     val assessment: Double = 0.0,
 
     // Campos Añadidos:
-    val categoryIds: List<Category> = emptyList(), // Guarda los IDs de categorías (números)
+    val categoryIds: List<String> = emptyList(), // Guarda los IDs de categorías (números)
     val isAdult: Boolean = false,          // Contenido para adultos
 
     // Campo de gestión
     val lastFetched: Long = 0L // Usamos 0L como valor predeterminado en lugar de System.currentTimeMillis()
+
+
 )

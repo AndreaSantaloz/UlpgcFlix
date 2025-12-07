@@ -22,16 +22,5 @@ class VisualContentService(
         }
     }
 
-    suspend fun getSeriesFromApi(genreIds: String, page: Int): String {
-        val response = apiService.getSeries(
-            apiKey = BuildConfig.TMDB_API_KEY,
-            genreIds = genreIds,
-            page = page
-        )
-        if (response.isSuccessful && response.body() != null) {
-            return response.body()!!.string()
-        } else {
-            throw Exception("Error al cargar series: ${response.code()}")
-        }
-    }
+
 }

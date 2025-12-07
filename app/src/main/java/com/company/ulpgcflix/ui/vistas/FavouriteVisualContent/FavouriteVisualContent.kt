@@ -1,6 +1,5 @@
 package com.company.ulpgcflix.ui.vistas.FavouriteVisualContent
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,7 +25,7 @@ import com.company.ulpgcflix.ui.viewmodel.FavoritesViewModel
 import com.company.ulpgcflix.ui.viewmodel.FavoritesViewModelFactory
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import FavoritesService
+import com.company.ulpgcflix.ui.servicios.FavoritesService
 
 @Composable
 fun FavouriteVisualContent(

@@ -1,4 +1,4 @@
-package com.company.ulpgcflix.ui.vistas.registro
+package com.company.ulpgcflix.ui.vistas.Login
 
 import android.annotation.SuppressLint
 import android.widget.Toast
@@ -26,49 +26,47 @@ import com.company.ulpgcflix.firebase.FirebaseAuthentication
 import com.company.ulpgcflix.R
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
-fun RegistroScreen(
-    onRegisterSuccess: () -> Unit
+fun LoginScreen(
+    onRegisterClick: () -> Unit,
+    onLoginSuccess: () -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") } // Renombrado de gMail a email
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val firebaseAuthentication = remember { FirebaseAuthentication() }
-    var registerAttemptResult by remember { mutableStateOf<Result<String>?>(null) }
+    var loginAttemptResult by remember { mutableStateOf<Result<String>?>(null) }
 
-
-    LaunchedEffect(registerAttemptResult) {
-        registerAttemptResult?.let { result ->
+    LaunchedEffect(loginAttemptResult) {
+        loginAttemptResult?.let { result ->
             isLoading = false
 
             result.onSuccess {
-
-                Toast.makeText(context, "¡Registro exitoso! Ya puedes iniciar sesión.", Toast.LENGTH_LONG).show()
-                onRegisterSuccess()
+                Toast.makeText(context, "Inicio de sesión exitoso.", Toast.LENGTH_SHORT).show()
+                onLoginSuccess()
             }.onFailure { error ->
-                Toast.makeText(context, "Error de registro: ${error.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, error.message, Toast.LENGTH_LONG).show()
             }
-            registerAttemptResult = null
+            loginAttemptResult = null
         }
     }
 
-    val attemptRegister: () -> Unit = {
+    val attemptLogin: () -> Unit = {
         if (email.isNotBlank() && password.isNotBlank()) {
             isLoading = true
 
-            firebaseAuthentication.RegisterUser(email, password, object : AuthCallback {
+            firebaseAuthentication.LoginUser(email, password, object : AuthCallback {
                 override fun onSuccess(message: String) {
-                    registerAttemptResult = Result.success(message)
+                    loginAttemptResult = Result.success(message)
                 }
 
                 override fun onFailure(errorMessage: String) {
-                    registerAttemptResult = Result.failure(Exception(errorMessage))
+                    loginAttemptResult = Result.failure(Exception(errorMessage))
                 }
             })
         } else {
-            Toast.makeText(context, "Por favor, completa los campos de correo y contraseña.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Por favor, introduce tu email y contraseña.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -80,6 +78,7 @@ fun RegistroScreen(
     ) {
         val screenWidth = maxWidth
         val screenHeight = maxHeight
+
 
         Canvas(
             modifier = Modifier
@@ -124,7 +123,7 @@ fun RegistroScreen(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Crear\ncuenta",
+                        text = "Iniciar\nsesión",
                         fontSize = (screenWidth.value * 0.06).sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF2D2D2D)
@@ -138,6 +137,7 @@ fun RegistroScreen(
                 }
             }
 
+
             Spacer(modifier = Modifier.height(screenHeight * 0.05f))
 
             Column(
@@ -147,10 +147,11 @@ fun RegistroScreen(
                     .fillMaxWidth()
                     .weight(1f)
             ) {
+
                 OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text("Usuario") },
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email (Usuario)") },
                     shape = RoundedCornerShape(50),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
@@ -161,23 +162,8 @@ fun RegistroScreen(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(26.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Correo") },
-                    shape = RoundedCornerShape(50),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.White,
-                        focusedBorderColor = Color(0xFF2D2D2D),
-                        unfocusedBorderColor = Color.Transparent
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(26.dp))
 
                 OutlinedTextField(
                     value = password,
@@ -194,11 +180,22 @@ fun RegistroScreen(
                     )
                 )
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                TextButton(onClick = { /* TODO */ }) {
+                    Text("¿Olvidaste la contraseña?", color = Color.Gray, fontSize = 13.sp)
+                }
+
+                TextButton(onClick = {onRegisterClick() }) {
+                    Text("Crear cuenta", color = Color.Gray, fontSize = 13.sp)
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
+
                 Button(
-                    onClick = attemptRegister,
-                    enabled = !isLoading, // Deshabilita mientras carga
+                    onClick = attemptLogin,
+                    enabled = !isLoading,
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D2D2D)),
                     modifier = Modifier
@@ -206,16 +203,13 @@ fun RegistroScreen(
                         .height(screenHeight * 0.07f)
                 ) {
                     if (isLoading) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     } else {
-                        Text("Registrarse", color = Color.White)
+                        Text("Confirmar", color = Color.White)
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(
                             imageVector = Icons.Default.ArrowForward,
-                            contentDescription = "Registrarse",
+                            contentDescription = "Confirmar",
                             tint = Color.White
                         )
                     }

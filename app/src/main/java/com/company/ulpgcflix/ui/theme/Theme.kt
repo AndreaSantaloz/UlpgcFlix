@@ -10,9 +10,10 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
+// *************** CAMBIO REALIZADO AQUÍ ***************
 private val LightColorScheme = lightColorScheme(
     primary = AcentoPrincipal,
-    secondary = AcentoSecundario,
+    secondary = ColorFavoritos,
     background = FondoPrincipal,
     surface = FondoSecundario,
     onPrimary = TextoPrincipal,
@@ -23,7 +24,7 @@ private val LightColorScheme = lightColorScheme(
 
 private val DarkColorScheme = darkColorScheme(
     primary = AcentoPrincipalDark,
-    secondary = AcentoSecundarioDark,
+    secondary = ColorFavoritosDark,
     background = FondoPrincipalDark,
     surface = FondoSecundarioDark,
     onPrimary = TextoPrincipalDark,
@@ -31,32 +32,10 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = TextoPrincipalDark,
     onSurface = TextoSecundarioDark
 )
-/*private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
-)*/
 
 @Composable
 fun UlpgcFlixTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
@@ -72,7 +51,7 @@ fun UlpgcFlixTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = Typography, // Asegúrate de que Typography esté definido/importado
         content = content
     )
 }

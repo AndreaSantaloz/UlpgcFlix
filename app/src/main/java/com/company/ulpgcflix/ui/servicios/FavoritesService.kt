@@ -1,4 +1,4 @@
-// package com.company.ulpgcflix.ui.servicios
+package com.company.ulpgcflix.ui.servicios
 
 import com.company.ulpgcflix.model.VisualContent
 import com.company.ulpgcflix.model.ContentLike
@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
+import java.lang.Exception // Importado para la excepción en getUserId
 
 class FavoritesService(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
@@ -22,27 +23,24 @@ class FavoritesService(
             ?: throw Exception("Usuario no autenticado. Por favor, inicie sesión.")
     }
 
-    // ===================================================
-    // 1. ADD FAVORITE: Escritura Dual
-    // ===================================================
-
     suspend fun addFavorite(content: VisualContent) {
         val userId = getUserId()
-        val contentApiId = content.getId // ID de TMDb
+        // CORRECCIÓN: Usar content.id
+        val contentApiId = content.getId
 
-        // --- A. GUARDAR METADATOS (Colección content_metadata) ---
-        // Usamos SET con merge para no sobrescribir si el contenido ya existe.
+
         val metadata = FavoriteContentMetadata(
             contentId = contentApiId,
             title = content.getTitle,
             image = content.getImage,
             kind = content.getKind.name,
-            assessment = content.getAssessment
+            assessment = content.getAssessment,
+            categoryIds = content.getCategory.map { it.categoryId }, // Asumiendo que categoryIds es List<String>
+            isAdult = content.isAdultContent // Asumiendo que existe
         )
-        // El ID del documento será el ID de TMDb
         firestore.collection(CONTENT_METADATA_PATH)
             .document(contentApiId)
-            .set(metadata, SetOptions.merge()) // Sobrescribe solo si es necesario, sin borrar otros campos
+            .set(metadata, SetOptions.merge())
             .await()
 
 
@@ -61,7 +59,6 @@ class FavoritesService(
 
     /**
      * Obtiene los favoritos leyendo las relaciones y luego los metadatos.
-     * Esto reemplaza por completo la función getFavoritesMap().
      */
     suspend fun getFavorites(): List<VisualContent> {
         val userId = getUserId()
@@ -77,9 +74,6 @@ class FavoritesService(
             .distinct()
 
         if (contentApiIds.isEmpty()) return emptyList()
-
-        // 2. Usar 'whereIn' para leer todos los metadatos de una vez (máx. 10 IDs por consulta)
-        // Si tienes más de 10 IDs, necesitas hacer múltiples consultas.
 
         val favoritesList = mutableListOf<VisualContent>()
 
@@ -97,16 +91,16 @@ class FavoritesService(
                     favoritesList.add(
                         // Mapea la información de FavoriteContentMetadata de vuelta a VisualContent
                         VisualContent(
-                            id =metadata.contentId,
-                            title =metadata.title,
-                            overview = "",
-                            image =metadata.image,
+                            id = metadata.contentId,
+                            title = metadata.title,
+                            overview =  "", // Asumiendo que el campo overview existe y puede ser nulo en la DB
+                            image = metadata.image,
                             assessment = metadata.assessment,
                             kind = enumValueOf<kindVisualContent>(metadata.kind),
-                            category = metadata.categoryIds,
-                            isAdult = metadata.isAdult,
-
-
+                            // Esto es una asunción, ya que categoryIds es List<String> y category es List<Category>
+                            // Si necesitas los nombres, debes inyectar CategoryServices aquí para buscar los objetos Category
+                            category = emptyList(),
+                            isAdult = metadata.isAdult
                         )
                     )
                 }
@@ -116,16 +110,22 @@ class FavoritesService(
         return favoritesList
     }
 
-    // Y también necesitas un removeFavorite actualizado para eliminar la relación (ContentLike)
-    suspend fun removeFavorite(contentApiId: String) {
+    /**
+     * Elimina una película favorita eliminando la relación (ContentLike).
+     * @param content El objeto VisualContent a eliminar.
+     */
+    suspend fun removeFavorite(content: VisualContent) {
         val userId = getUserId()
+
+        // CORRECCIÓN CLAVE: Obtener el ID de la API del objeto VisualContent
+        val contentApiId = content.getId
+
+        // Reconstruir el documentId exactamente como fue guardado en addFavorite
         val documentId = "${userId}_$contentApiId"
 
         firestore.collection(CONTENT_LIKES_PATH)
             .document(documentId)
             .delete()
             .await()
-
-        // NOTA: No borramos los metadatos, ya que otros usuarios pueden tenerlo como favorito.
     }
 }

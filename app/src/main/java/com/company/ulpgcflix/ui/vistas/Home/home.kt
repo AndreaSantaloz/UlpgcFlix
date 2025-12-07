@@ -1,4 +1,4 @@
-package com.company.ulpgcflix.ui.vistas.home
+package com.company.ulpgcflix.ui.vistas.Home
 
 
 import androidx.compose.foundation.Image
