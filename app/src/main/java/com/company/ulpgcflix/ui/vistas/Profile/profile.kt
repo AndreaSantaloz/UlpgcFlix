@@ -27,6 +27,54 @@ import coil.compose.rememberAsyncImagePainter
 import com.company.ulpgcflix.ui.theme.ColorFavoritos
 import com.company.ulpgcflix.ui.theme.ColorFavoritosDark
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore // ⚠️ NECESARIO para Firestore
+
+// --- Funciones de Lógica de Firestore (NUEVO) ---
+private const val FIRESTORE_COLLECTION_IMAGES = "images"
+private const val FIRESTORE_FIELD_URL = "urlImagen"
+
+/**
+ * Guarda la URL de la imagen de perfil en Firestore.
+ * El documento se crea/actualiza usando el UID del usuario como ID.
+ */
+private fun saveProfileImageUrl(uid: String, url: String?, onComplete: (Boolean) -> Unit) {
+    val db = FirebaseFirestore.getInstance()
+    val data = hashMapOf(
+        "uidUsuario" to uid,
+        FIRESTORE_FIELD_URL to (url ?: "") // Almacena un String vacío si es nulo
+    )
+
+    // Usa el UID como ID del documento para facilitar la búsqueda
+    db.collection(FIRESTORE_COLLECTION_IMAGES).document(uid)
+        .set(data)
+        .addOnSuccessListener {
+            onComplete(true)
+            println("URL de perfil guardada con éxito para UID: $uid")
+        }
+        .addOnFailureListener { e ->
+            onComplete(false)
+            println("Error al guardar la URL de perfil: $e")
+        }
+}
+
+/**
+ * Recupera la URL de la imagen de perfil desde Firestore.
+ */
+private fun fetchProfileImageUrl(uid: String, onResult: (String?) -> Unit) {
+    val db = FirebaseFirestore.getInstance()
+    db.collection(FIRESTORE_COLLECTION_IMAGES).document(uid)
+        .get()
+        .addOnSuccessListener { document ->
+            val url = document.getString(FIRESTORE_FIELD_URL)
+            onResult(url.takeIf { !it.isNullOrEmpty() }) // Devuelve null si no hay URL o está vacía
+        }
+        .addOnFailureListener { e ->
+            println("Error al obtener la URL de perfil: $e")
+            onResult(null)
+        }
+}
+// --- Fin de Funciones de Lógica de Firestore ---
+
 
 @Composable
 fun ProfileScreen(
@@ -36,10 +84,30 @@ fun ProfileScreen(
     isEditing: Boolean,
     onSetEditing: (Boolean) -> Unit,
 ) {
+    // Ya no se utiliza SharedPreferences para la URL, pero se mantiene para el Context
     val context = LocalContext.current
-    val prefs = context.getSharedPreferences("user_profile_prefs", Context.MODE_PRIVATE)
-
     val firebaseUser = FirebaseAuth.getInstance().currentUser
+    val uid = firebaseUser?.uid
+
+    // Estado local para la URL de la imagen de perfil. Inicialmente nulo.
+    var profileImageUrlString by remember { mutableStateOf<String?>(null) }
+    // Indicador de carga para la lectura inicial de Firestore
+    var isLoadingUrl by remember { mutableStateOf(true) }
+
+
+    // 1. Efecto para obtener la URL desde Firestore al cargar
+    LaunchedEffect(uid) {
+        if (uid != null) {
+            fetchProfileImageUrl(uid) { url ->
+                profileImageUrlString = url
+                isLoadingUrl = false
+            }
+        } else {
+            isLoadingUrl = false // No hay usuario, no hay que cargar
+        }
+    }
+
+
     val username = remember(firebaseUser) {
         firebaseUser?.displayName ?:
         firebaseUser?.email?.substringBefore('@') ?:
@@ -50,10 +118,8 @@ fun ProfileScreen(
     var aboutMeText by remember { mutableStateOf("Hola, soy un crítico de cine apasionado y me encantan las películas de ciencia ficción.") }
     val isDark = isSystemInDarkTheme()
 
-    var profileImageUrlString by remember {
-        mutableStateOf<String?>(prefs.getString("profile_url", null))
-    }
-
+    // El valor inicial se toma del estado de Compose (profileImageUrlString),
+    // que se actualiza desde Firestore.
     var currentUrlInput by remember(isEditing, profileImageUrlString) {
         mutableStateOf(profileImageUrlString ?: "")
     }
@@ -75,7 +141,16 @@ fun ProfileScreen(
                 )
         ) {
 
-            if (!profileImageUrlString.isNullOrEmpty()) {
+            // Muestra el indicador de carga si estamos esperando la URL de Firestore
+            if (isLoadingUrl) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (!profileImageUrlString.isNullOrEmpty()) {
+                // Muestra la imagen si se cargó la URL
                 Image(
                     painter = rememberAsyncImagePainter(model = profileImageUrlString),
                     contentDescription = "Foto de perfil de $username",
@@ -85,6 +160,7 @@ fun ProfileScreen(
                         .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
                 )
             } else {
+                // Muestra el icono de Persona si no hay URL
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -96,7 +172,7 @@ fun ProfileScreen(
                         imageVector = Icons.Default.Person,
                         contentDescription = "Sin imagen de perfil",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(150.dp) // Icono grande para cubrir el fondo
+                        modifier = Modifier.size(150.dp)
                     )
                 }
             }
@@ -113,7 +189,7 @@ fun ProfileScreen(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Volver a Contenido Visual",
-                    tint = Color.Black, // Asegúrate de que el color contraste con la imagen
+                    tint = Color.Black,
                     modifier = Modifier.size(32.dp)
                 )
             }
@@ -127,7 +203,7 @@ fun ProfileScreen(
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "Ajustes",
-                    tint = Color.Black, // Asegúrate de que el color contraste con la imagen
+                    tint = Color.Black,
                     modifier = Modifier.size(32.dp)
                 )
             }
@@ -138,7 +214,7 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-         Text(
+        Text(
             text = username,
             fontWeight = FontWeight.Bold,
             fontSize = 24.sp,
@@ -183,9 +259,25 @@ fun ProfileScreen(
 
             Button(
                 onClick = {
-                    profileImageUrlString = currentUrlInput.takeIf { it.isNotBlank() }
-                    prefs.edit().putString("profile_url", profileImageUrlString).apply()
-                    onSetEditing(false)
+                    val newUrl = currentUrlInput.takeIf { it.isNotBlank() }
+                    profileImageUrlString = newUrl // Actualiza el estado local
+
+                    // 2. Guarda la URL en Firestore
+                    if (uid != null) {
+                        saveProfileImageUrl(uid, newUrl) { success ->
+                            if (success) {
+                                onSetEditing(false) // Solo desactiva la edición si el guardado fue exitoso
+                            } else {
+                                // Muestra un mensaje de error si el guardado falla
+                                // (Idealmente con un Snackbar o un Toast)
+                                println("Error al guardar la URL en la base de datos.")
+                            }
+                        }
+                    } else {
+                        // Si no hay UID, simplemente desactiva la edición
+                        onSetEditing(false)
+                    }
+
                 },
                 modifier = Modifier
                     .padding(top = 8.dp)
