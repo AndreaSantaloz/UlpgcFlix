@@ -1,6 +1,5 @@
 package com.company.ulpgcflix.ui.vistas.Profile
 
-import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -19,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -30,41 +28,54 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 
-private const val FIRESTORE_COLLECTION_IMAGES = "images"
+private const val FIRESTORE_COLLECTION_PROFILES = "profiles"
 private const val FIRESTORE_FIELD_URL = "urlImagen"
+private const val FIRESTORE_FIELD_DESCRIPTION = "description"
+private const val FIRESTORE_FIELD_UID = "uidUsuario"
+
+data class UserProfileData(
+    val imageUrl: String? = null,
+    val description: String = "Hola, soy un crítico de cine apasionado y me encantan las películas de ciencia ficción."
+)
 
 
-private fun saveProfileImageUrl(uid: String, url: String?, onComplete: (Boolean) -> Unit) {
+private fun saveProfileData(uid: String, url: String?, description: String, onComplete: (Boolean) -> Unit) {
     val db = FirebaseFirestore.getInstance()
     val data = hashMapOf(
-        "uidUsuario" to uid,
-        FIRESTORE_FIELD_URL to (url ?: "")
+        FIRESTORE_FIELD_UID to uid,
+        FIRESTORE_FIELD_URL to (url ?: ""),
+        FIRESTORE_FIELD_DESCRIPTION to description
     )
 
-    db.collection(FIRESTORE_COLLECTION_IMAGES).document(uid)
+    db.collection(FIRESTORE_COLLECTION_PROFILES).document(uid)
         .set(data)
         .addOnSuccessListener {
             onComplete(true)
-            println("URL de perfil guardada con éxito para UID: $uid")
+            println("Datos de perfil guardados con éxito para UID: $uid")
         }
         .addOnFailureListener { e ->
             onComplete(false)
-            println("Error al guardar la URL de perfil: $e")
+            println("Error al guardar los datos de perfil: $e")
         }
 }
 
 
-private fun fetchProfileImageUrl(uid: String, onResult: (String?) -> Unit) {
+private fun fetchProfileData(uid: String, onResult: (UserProfileData?) -> Unit) {
     val db = FirebaseFirestore.getInstance()
-    db.collection(FIRESTORE_COLLECTION_IMAGES).document(uid)
+    db.collection(FIRESTORE_COLLECTION_PROFILES).document(uid)
         .get()
         .addOnSuccessListener { document ->
-            val url = document.getString(FIRESTORE_FIELD_URL)
-            onResult(url.takeIf { !it.isNullOrEmpty() })
+            if (document.exists()) {
+                val imageUrl = document.getString(FIRESTORE_FIELD_URL)
+                val description = document.getString(FIRESTORE_FIELD_DESCRIPTION) ?: UserProfileData().description
+                onResult(UserProfileData(imageUrl.takeIf { !it.isNullOrEmpty() }, description))
+            } else {
+                onResult(UserProfileData())
+            }
         }
         .addOnFailureListener { e ->
-            println("Error al obtener la URL de perfil: $e")
-            onResult(null)
+            println("Error al obtener los datos de perfil: $e")
+            onResult(UserProfileData())
         }
 }
 
@@ -77,17 +88,18 @@ fun ProfileScreen(
     isEditing: Boolean,
     onSetEditing: (Boolean) -> Unit,
 ) {
-    val context = LocalContext.current
     val firebaseUser = FirebaseAuth.getInstance().currentUser
     val uid = firebaseUser?.uid
     var profileImageUrlString by remember { mutableStateOf<String?>(null) }
+    var aboutMeText by remember { mutableStateOf(UserProfileData().description) }
     var isLoadingUrl by remember { mutableStateOf(true) }
 
 
     LaunchedEffect(uid) {
         if (uid != null) {
-            fetchProfileImageUrl(uid) { url ->
-                profileImageUrlString = url
+            fetchProfileData(uid) { profileData ->
+                profileImageUrlString = profileData?.imageUrl
+                aboutMeText = profileData?.description ?: UserProfileData().description
                 isLoadingUrl = false
             }
         } else {
@@ -103,7 +115,6 @@ fun ProfileScreen(
     }
 
     val isProfileOwner = true
-    var aboutMeText by remember { mutableStateOf("Hola, soy un crítico de cine apasionado y me encantan las películas de ciencia ficción.") }
     val isDark = isSystemInDarkTheme()
     var currentUrlInput by remember(isEditing, profileImageUrlString) {
         mutableStateOf(profileImageUrlString ?: "")
@@ -221,7 +232,7 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp)
-                    .height(150.dp)
+                    .heightIn(min = 100.dp, max = 200.dp)
             )
 
 
@@ -240,14 +251,13 @@ fun ProfileScreen(
             Button(
                 onClick = {
                     val newUrl = currentUrlInput.takeIf { it.isNotBlank() }
-                    profileImageUrlString = newUrl
                     if (uid != null) {
-                        saveProfileImageUrl(uid, newUrl) { success ->
+                        saveProfileData(uid, newUrl, aboutMeText) { success ->
                             if (success) {
+                                profileImageUrlString = newUrl
                                 onSetEditing(false)
                             } else {
-
-                                println("Error al guardar la URL en la base de datos.")
+                                println("Error al guardar los datos en la base de datos.")
                             }
                         }
                     } else {
@@ -264,6 +274,7 @@ fun ProfileScreen(
             }
 
         } else {
+
             Text(
                 text = aboutMeText,
                 fontSize = 16.sp,
