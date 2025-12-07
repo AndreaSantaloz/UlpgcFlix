@@ -1,6 +1,5 @@
 package com.company.ulpgcflix.ui.vistas.VisualContent
 
-
 import com.company.ulpgcflix.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -28,13 +27,21 @@ import com.company.ulpgcflix.model.VisualContent
 import com.company.ulpgcflix.ui.interfaces.ApiService
 import com.company.ulpgcflix.ui.servicios.CategoryServices
 import com.company.ulpgcflix.ui.servicios.VisualContentService
-import com.company.ulpgcflix.ui.servicios.FavoritesService
+import FavoritesService
 import com.company.ulpgcflix.ui.viewmodel.VisualContentViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Animatable
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlin.math.roundToInt
+import kotlin.math.abs
 
 
 class VisualContentViewModelFactory(
@@ -73,11 +80,112 @@ object RetrofitClient {
 }
 
 
+@Composable
+fun SwipeableCard(
+    item: VisualContent,
+    onSwipeLeft: () -> Unit,
+    onSwipeRight: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val coroutineScope = rememberCoroutineScope()
+
+    val offsetX = remember { Animatable(0f) }
+    val swipeThreshold = 400f
+    val rotationFactor = 0.05f
+
+    Card(
+        modifier = modifier
+
+            .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+            .graphicsLayer(
+                rotationZ = offsetX.value * rotationFactor,
+                alpha = 1f - (abs(offsetX.value) / swipeThreshold).coerceIn(0f, 1f)
+            )
+
+            .pointerInput(item.getTitle) {
+                detectDragGestures(
+                    onDragEnd = {
+
+                        coroutineScope.launch {
+                            when {
+
+                                offsetX.value > swipeThreshold -> {
+                                    offsetX.animateTo(targetValue = size.width.toFloat() * 1.5f, animationSpec = tween(300))
+                                    onSwipeRight()
+                                }
+
+                                offsetX.value < -swipeThreshold -> {
+                                    offsetX.animateTo(targetValue = -size.width.toFloat() * 1.5f, animationSpec = tween(300))
+                                    onSwipeLeft()
+                                }
+
+                                else -> {
+                                    offsetX.animateTo(0f, tween(300))
+                                }
+                            }
+                        }
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        coroutineScope.launch {
+                            offsetX.snapTo(offsetX.value + dragAmount.x)
+                        }
+                    }
+                )
+            },
+
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(8.dp)
+    ) {
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            AsyncImage(
+                model = "https://image.tmdb.org/t/p/w500${item.getImage}",
+                contentDescription = item.getTitle,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = item.getTitle,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                val primaryCategory = item.getCategory.firstOrNull()?.categoryName ?: "Sin Categoría"
+                Text(
+                    text = primaryCategory,
+                    fontSize = 16.sp,
+                    color = Color.LightGray
+                )
+                Text(
+                    text = "⭐ %.1f".format(item.getAssessment),
+                    fontSize = 16.sp,
+                    color = Color.Yellow
+                )
+            }
+        }
+    }
+
+
+    LaunchedEffect(item.getTitle) {
+        offsetX.snapTo(0f)
+    }
+}
+
+
 
 @Composable
 fun VisualContent(
     setingSucess: () -> Unit,
-    onSocialMedia:() -> Unit, // Función para la acción del nuevo botón
+    onSocialMedia:() -> Unit,
     favoritesService: FavoritesService = remember {
         FavoritesService(
             FirebaseFirestore.getInstance(),
@@ -164,8 +272,8 @@ fun VisualContent(
             )
             FloatingActionButton(
                 onClick = setingSucess,
-                modifier = Modifier.size(45.dp), // Tamaño estándar de FAB
-                containerColor = MaterialTheme.colorScheme.primary // O el color que desees
+                modifier = Modifier.size(45.dp),
+                containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
@@ -181,59 +289,25 @@ fun VisualContent(
         }
         if (contenido.isNotEmpty() && currentIndex < contenido.size) {
             val item: VisualContent = contenido[currentIndex]
-            Card(
+
+
+            SwipeableCard(
+                item = item,
+                onSwipeLeft = handleDislikeAction,
+                onSwipeRight = { handleLikeAction(item) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(vertical = 8.dp),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(8.dp)
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    AsyncImage(
-                        model = "https://image.tmdb.org/t/p/w500${item.getImage}",
-                        contentDescription = item.getTitle,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .fillMaxWidth()
-                            .background(Color.Black.copy(alpha = 0.5f))
-                            .padding(16.dp)
-                    ) {
-                        Text(
-                            text = item.getTitle,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 22.sp,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+                    .padding(vertical = 8.dp)
+            )
 
-                        val primaryCategory = item.getCategory.firstOrNull()?.categoryName ?: "Sin Categoría"
-                        Text(
-                            text = primaryCategory,
-                            fontSize = 16.sp,
-                            color = Color.LightGray
-                        )
-
-                        Text(
-                            text = "⭐ %.1f".format(item.getAssessment),
-                            fontSize = 16.sp,
-                            color = Color.Yellow
-                        )
-                    }
-                }
-            }
             Spacer(Modifier.height(24.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
                 FloatingActionButton(onClick = handleDislikeAction, containerColor = Color.Red) {
                     Icon(
                         imageVector = Icons.Default.Cancel,

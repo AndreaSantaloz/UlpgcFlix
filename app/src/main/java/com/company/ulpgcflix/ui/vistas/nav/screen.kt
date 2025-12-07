@@ -12,4 +12,7 @@ sealed class Screen(val route: String) {
     object Setting: Screen("Setting")
 
     object SocialMedia: Screen("SocialMedia")
+    object NewChannelDialog: Screen("NewChannelDialog")
+    object ChannelDialog: Screen("ChannelDialog")
+    object ProfileGroupDialog:Screen("ProfileGroupDialog")
 }

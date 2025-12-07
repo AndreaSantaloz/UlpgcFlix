@@ -1,13 +1,12 @@
 package com.company.ulpgcflix.ui.viewmodel
 
-
+import FavoritesService
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.company.ulpgcflix.model.VisualContent
-import com.company.ulpgcflix.ui.servicios.FavoritesService
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -57,28 +56,20 @@ class FavoritesViewModel(
         }
     }
 
-
+    /**
+     * Carga los favoritos utilizando el nuevo método del servicio.
+     * El mapeo a VisualContent se realiza ahora en la capa Service.
+     */
     fun loadFavorites() {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
             try {
+                // Llama al servicio que lee de Firestore y devuelve List<VisualContent>
+                val favoritesList = favoritesService.getFavorites()
 
-                val favoritesMap = favoritesService.getFavoritesMap()
-
-
-                val favoritesList = favoritesMap.entries.map { (id, data) ->
-                    VisualContent(
-                        id = id,
-                        title = data["titulo"] as String,
-                        image = data["poster_path"] as String,
-                        assessment = data["assessment"] as Double,
-                        overview = "",
-                        kind = if (data["tipo"] == "MOVIE") com.company.ulpgcflix.model.kindVisualContent.MOVIE else com.company.ulpgcflix.model.kindVisualContent.SERIES,
-                        category = emptyList(),
-                        isAdult = false
-                    )
-                }
+                // Ya no necesitamos la lógica compleja de mapeo manual
+                // que existía antes para 'getFavoritesMap()'.
 
                 _allFavorites.value = favoritesList
                 filterFavorites(_searchText.value)
@@ -103,6 +94,7 @@ class FavoritesViewModel(
         }
 
         val filteredList = _allFavorites.value.filter { content ->
+            // Se asume que content.getTitle es la forma correcta de acceder al título.
             content.getTitle.contains(query, ignoreCase = true)
         }
         _visibleFavorites.value = filteredList
@@ -112,6 +104,7 @@ class FavoritesViewModel(
     fun removeFavorite(content: VisualContent) {
         viewModelScope.launch {
             try {
+                // removeFavorite sigue funcionando igual
                 favoritesService.removeFavorite(content.getId)
                 val updatedList = _allFavorites.value.filter { it.getId != content.getId }
                 _allFavorites.value = updatedList
@@ -122,4 +115,5 @@ class FavoritesViewModel(
             }
         }
     }
+
 }

@@ -1,9 +1,11 @@
 package com.company.ulpgcflix.firebase
 
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 
 class FirebaseFirestore {
@@ -28,7 +30,19 @@ class FirebaseFirestore {
             docRef?.let(onSuccess) ?: onFailure(Exception("No se pudo obtener la DocumentReference."))
         }.addOnFailureListener(onFailure)
     }
+    fun queryCollection(
+        collectionPath: String,
+        query: (CollectionReference) -> Query, // La lambda recibe CollectionReference y debe retornar un objeto Query
+        onSuccess: (QuerySnapshot) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val collectionRef = database.collection(collectionPath)
 
+        // Aplica el filtro/ordenación definido en la lambda 'query' y luego ejecuta la lectura
+        query(collectionRef).get()
+            .addOnSuccessListener(onSuccess)
+            .addOnFailureListener(onFailure)
+    }
 
     fun readDocument(
         collectionPath: String,

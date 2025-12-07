@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.company.ulpgcflix.ui.servicios.VisualContentService
 import com.company.ulpgcflix.ui.servicios.CategoryServices
-import com.company.ulpgcflix.ui.servicios.FavoritesService // <-- IMPORTADO
 import com.company.ulpgcflix.model.*
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -14,12 +13,13 @@ import org.json.JSONObject
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import com.company.ulpgcflix.ui.interfaces.ApiService
-
+// Importa el FavoritesService desde su ubicación correcta si no está en el root del paquete
+import FavoritesService
 class VisualContentViewModel(
     private val visual: VisualContentService,
     private val categoryServices: CategoryServices,
     apiService: ApiService,
-    private val favoritesService: FavoritesService // <-- NUEVA DEPENDENCIA
+    private val favoritesService: FavoritesService // <-- USAMOS EL NUEVO SERVICE
 ) : ViewModel() {
 
     private val _contentList = mutableStateOf<List<VisualContent>>(emptyList())
@@ -59,7 +59,7 @@ class VisualContentViewModel(
             image = itemObject.optString("poster_path", ""),
             assessment = itemObject.optDouble("vote_average", 0.0),
             kind = contentKind,
-            category = categories,
+            category = categories, // <--- CORRECCIÓN APLICADA AQUÍ
             isAdult = itemObject.optBoolean("adult", false)
         )
     }
@@ -105,9 +105,15 @@ class VisualContentViewModel(
         }
     }
 
+    /**
+     * Llama al FavoritesService, que ahora realiza una escritura dual:
+     * 1. Guarda los metadatos del contenido (título, imagen, categorías, etc.) en 'content_metadata'.
+     * 2. Guarda la relación usuario-contenido en 'content_likes'.
+     */
     fun saveFavorite(content: VisualContent) {
         viewModelScope.launch {
             try {
+                // Pasamos el objeto VisualContent completo
                 favoritesService.addFavorite(content)
                 _error.value = null
             } catch (e: Exception) {

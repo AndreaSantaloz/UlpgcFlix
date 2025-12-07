@@ -24,10 +24,9 @@ import coil.compose.AsyncImage
 import com.company.ulpgcflix.model.VisualContent
 import com.company.ulpgcflix.ui.viewmodel.FavoritesViewModel
 import com.company.ulpgcflix.ui.viewmodel.FavoritesViewModelFactory
-import com.company.ulpgcflix.ui.servicios.FavoritesService
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-
+import FavoritesService
 
 @Composable
 fun FavouriteVisualContent(
