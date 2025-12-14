@@ -1,5 +1,6 @@
 package com.company.ulpgcflix.ui.vistas.FavouriteVisualContent
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,13 +21,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.company.ulpgcflix.model.VisualContent
+import com.company.ulpgcflix.domain.model.VisualContent
 import com.company.ulpgcflix.ui.viewmodel.FavoritesViewModel
 import com.company.ulpgcflix.ui.viewmodel.FavoritesViewModelFactory
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.company.ulpgcflix.ui.servicios.FavoritesService
 
+// Añadimos la anotación para ignorar el parámetro de padding de Scaffold,
+// ya que la Column principal gestionará el layout y el padding.
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun FavouriteVisualContent(
     onNavigateBack: () -> Unit,
@@ -38,78 +42,85 @@ fun FavouriteVisualContent(
     },
     viewModel: FavoritesViewModel = viewModel(
         factory = FavoritesViewModelFactory(favoritesService)
-    )
-) {
+    ),
+    modifier: Modifier,
+
+    ) {
     val favoritesList by viewModel.visibleFavorites
     val searchText by viewModel.searchText.collectAsState()
     val isLoading by viewModel.isLoading
     val error by viewModel.error
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Row(
+    // 💡 1. ENVOLVEMOS TODA LA PANTALLA EN UN SCAFFOLD
+    Scaffold(modifier = modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                // 💡 2. APLICAMOS statusBarsPadding AQUÍ para separar el contenido de la barra
+                .statusBarsPadding()
+                .padding(16.dp)
         ) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás")
-            }
-            Text(
-                text = "Mis Favoritos",
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
+            Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 8.dp)
-            )
-        }
-
-        OutlinedTextField(
-            value = searchText,
-            onValueChange = viewModel::onSearchTextChanged,
-            label = { Text("Buscar favoritos...") },
-            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
-            trailingIcon = {
-                if (searchText.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.onSearchTextChanged("") }) {
-                        Icon(Icons.Filled.Close, contentDescription = "Clear search")
-                    }
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(24.dp),
-            singleLine = true
-        )
-
-        if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-        }
-
-        error?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 8.dp))
-        }
-
-        if (!isLoading && favoritesList.isEmpty() && searchText.isEmpty()) {
-            Text("Aún no tienes favoritos. ¡Añade algunos!", modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 32.dp))
-        } else if (!isLoading && favoritesList.isEmpty() && searchText.isNotEmpty()) {
-            Text("No se encontraron resultados para \"$searchText\".", modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 32.dp))
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 8.dp)
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                items(favoritesList, key = { it.getId }) { item ->
-                    FavoriteItemCard(
-                        content = item,
-                        onDeleteClick = { viewModel.removeFavorite(item) }
-                    )
+                IconButton(onClick = onNavigateBack) {
+                    Icon(Icons.Filled.ArrowBack, contentDescription = "Atrás")
+                }
+                Text(
+                    text = "Mis Favoritos",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
+                )
+            }
+
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = viewModel::onSearchTextChanged,
+                label = { Text("Buscar favoritos...") },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
+                trailingIcon = {
+                    if (searchText.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onSearchTextChanged("") }) {
+                            Icon(Icons.Filled.Close, contentDescription = "Clear search")
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                shape = RoundedCornerShape(24.dp),
+                singleLine = true
+            )
+
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            }
+
+            error?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 8.dp))
+            }
+
+            if (!isLoading && favoritesList.isEmpty() && searchText.isEmpty()) {
+                Text("Aún no tienes favoritos. ¡Añade algunos!", modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 32.dp))
+            } else if (!isLoading && favoritesList.isEmpty() && searchText.isNotEmpty()) {
+                Text("No se encontraron resultados para \"$searchText\".", modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 32.dp))
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(favoritesList, key = { it.getId }) { item ->
+                        FavoriteItemCard(
+                            content = item,
+                            onDeleteClick = { viewModel.removeFavorite(item) }
+                        )
+                    }
                 }
             }
         }

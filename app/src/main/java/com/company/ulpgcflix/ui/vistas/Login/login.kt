@@ -24,11 +24,15 @@ import androidx.compose.ui.unit.sp
 import com.company.ulpgcflix.firebase.AuthCallback
 import com.company.ulpgcflix.firebase.FirebaseAuthentication
 import com.company.ulpgcflix.R
-@SuppressLint("UnusedBoxWithConstraintsScope")
+
+// Añadimos la anotación para ignorar el parámetro de padding de Scaffold,
+// ya que BoxWithConstraints y Column gestionarán el layout.
+@SuppressLint("UnusedBoxWithConstraintsScope", "UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun LoginScreen(
     onRegisterClick: () -> Unit,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -70,150 +74,154 @@ fun LoginScreen(
         }
     }
 
-
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF9F9FB))
-    ) {
-        val screenWidth = maxWidth
-        val screenHeight = maxHeight
-
-
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(screenHeight * 0.35f)
-                .align(Alignment.TopCenter)
-        ) {
-            drawCircle(
-                color = Color(0xFFE6E7F2),
-                radius = size.width * 0.7f,
-                center = Offset(size.width / 2, 0f)
-            )
-        }
-
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(screenHeight * 0.25f)
-                .align(Alignment.BottomCenter)
-        ) {
-            drawCircle(
-                color = Color(0xFFE6E7F2),
-                radius = size.width * 0.3f,
-                center = Offset(size.width, size.height)
-            )
-        }
-
-        Column(
+    // 💡 1. ENVOLVEMOS TODA LA PANTALLA EN UN SCAFFOLD
+    Scaffold(modifier = modifier.fillMaxSize()) {
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .background(Color(0xFFF9F9FB))
         ) {
-            Box(
+            val screenWidth = maxWidth
+            val screenHeight = maxHeight
+
+
+            Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(screenHeight * 0.25f),
-                contentAlignment = Alignment.BottomCenter
+                    .height(screenHeight * 0.35f)
+                    .align(Alignment.TopCenter)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Iniciar\nsesión",
-                        fontSize = (screenWidth.value * 0.06).sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF2D2D2D)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Image(
-                        painter = painterResource(R.drawable.logo),
-                        contentDescription = "Logo",
-                        modifier = Modifier.size(screenWidth * 0.22f)
-                    )
-                }
+                drawCircle(
+                    color = Color(0xFFE6E7F2),
+                    radius = size.width * 0.7f,
+                    center = Offset(size.width / 2, 0f)
+                )
             }
 
-
-            Spacer(modifier = Modifier.height(screenHeight * 0.05f))
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
+            Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .height(screenHeight * 0.25f)
+                    .align(Alignment.BottomCenter)
             ) {
-
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email (Usuario)") },
-                    shape = RoundedCornerShape(50),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFE6E6E6),
-                        focusedBorderColor = Color(0xFF2D2D2D),
-                        unfocusedBorderColor = Color.Transparent
-                    )
+                drawCircle(
+                    color = Color(0xFFE6E7F2),
+                    radius = size.width * 0.3f,
+                    center = Offset(size.width, size.height)
                 )
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Contraseña") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    shape = RoundedCornerShape(50),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.White,
-                        focusedBorderColor = Color(0xFF2D2D2D),
-                        unfocusedBorderColor = Color.Transparent
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-
-                TextButton(onClick = {onRegisterClick() }) {
-                    Text("Crear cuenta", color = Color.Gray, fontSize = 13.sp)
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-
-                Button(
-                    onClick = attemptLogin,
-                    enabled = !isLoading,
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D2D2D)),
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    // 💡 2. APLICAMOS statusBarsPadding AQUÍ para separar el contenido de la barra
+                    .statusBarsPadding()
+                    .padding(horizontal = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .height(screenHeight * 0.07f)
+                        .fillMaxWidth()
+                        .height(screenHeight * 0.25f),
+                    contentAlignment = Alignment.BottomCenter
                 ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
-                    } else {
-                        Text("Confirmar", color = Color.White)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            imageVector = Icons.Default.ArrowForward,
-                            contentDescription = "Confirmar",
-                            tint = Color.White
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Iniciar\nsesión",
+                            fontSize = (screenWidth.value * 0.06).sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF2D2D2D)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Image(
+                            painter = painterResource(R.drawable.logo),
+                            contentDescription = "Logo",
+                            modifier = Modifier.size(screenWidth * 0.22f)
                         )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(screenHeight * 0.05f))
+
+                Spacer(modifier = Modifier.height(screenHeight * 0.05f))
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email (Usuario)") },
+                        shape = RoundedCornerShape(50),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedContainerColor = Color(0xFFE6E6E6),
+                            focusedBorderColor = Color(0xFF2D2D2D),
+                            unfocusedBorderColor = Color.Transparent
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Contraseña") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        shape = RoundedCornerShape(50),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedContainerColor = Color.White,
+                            focusedBorderColor = Color(0xFF2D2D2D),
+                            unfocusedBorderColor = Color.Transparent
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+
+                    TextButton(onClick = {onRegisterClick() }) {
+                        Text("Crear cuenta", color = Color.Gray, fontSize = 13.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+
+                    Button(
+                        onClick = attemptLogin,
+                        enabled = !isLoading,
+                        shape = RoundedCornerShape(50),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D2D2D)),
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f)
+                            .height(screenHeight * 0.07f)
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                        } else {
+                            Text("Confirmar", color = Color.White)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.Default.ArrowForward,
+                                contentDescription = "Confirmar",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(screenHeight * 0.05f))
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.company.ulpgcflix.model
+package com.company.ulpgcflix.domain.model
 
 data class Group(
     private final val id: String,
@@ -24,6 +24,3 @@ data class Group(
     val getImage: String
         get() = this.image
 }
-
-
-

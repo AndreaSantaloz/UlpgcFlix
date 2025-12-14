@@ -1,11 +1,10 @@
-package com.company.ulpgcflix.ui.vistas.SocialMedia
+package com.company.ulpgcflix.ui.vistas.SocialMedia.Channel
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.*
@@ -22,7 +21,8 @@ import com.company.ulpgcflix.ui.viewmodel.SocialMediaViewModel
 @Composable
 fun NewChannelDialog(
     onNavigateBack: () -> Unit,
-    viewModel: SocialMediaViewModel
+    viewModel: SocialMediaViewModel,
+    modifier: Modifier,
 ) {
     var channelName by remember { mutableStateOf("") }
     var channelDescription by remember { mutableStateOf("") }

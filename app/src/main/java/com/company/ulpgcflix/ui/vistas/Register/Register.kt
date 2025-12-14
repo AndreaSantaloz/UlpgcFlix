@@ -24,10 +24,13 @@ import androidx.compose.ui.unit.sp
 import com.company.ulpgcflix.firebase.AuthCallback
 import com.company.ulpgcflix.firebase.FirebaseAuthentication
 import com.company.ulpgcflix.R
-@SuppressLint("UnusedBoxWithConstraintsScope")
+
+// Añadimos la anotación para ignorar el parámetro de padding de Scaffold.
+@SuppressLint("UnusedBoxWithConstraintsScope", "UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun RegistroScreen(
-    onRegisterSuccess: () -> Unit
+    onRegisterSuccess: () -> Unit,
+    modifier: Modifier,
 ) {
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -72,157 +75,161 @@ fun RegistroScreen(
         }
     }
 
-
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF9F9FB))
-    ) {
-        val screenWidth = maxWidth
-        val screenHeight = maxHeight
-
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(screenHeight * 0.35f)
-                .align(Alignment.TopCenter)
-        ) {
-            drawCircle(
-                color = Color(0xFFE6E7F2),
-                radius = size.width * 0.7f,
-                center = Offset(size.width / 2, 0f)
-            )
-        }
-
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(screenHeight * 0.25f)
-                .align(Alignment.BottomCenter)
-        ) {
-            drawCircle(
-                color = Color(0xFFE6E7F2),
-                radius = size.width * 0.3f,
-                center = Offset(size.width, size.height)
-            )
-        }
-
-        Column(
+    // 💡 1. ENVOLVEMOS TODA LA PANTALLA EN UN SCAFFOLD
+    Scaffold(modifier = modifier.fillMaxSize()) {
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .background(Color(0xFFF9F9FB))
         ) {
-            Box(
+            val screenWidth = maxWidth
+            val screenHeight = maxHeight
+
+            Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(screenHeight * 0.25f),
-                contentAlignment = Alignment.BottomCenter
+                    .height(screenHeight * 0.35f)
+                    .align(Alignment.TopCenter)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Crear\ncuenta",
-                        fontSize = (screenWidth.value * 0.06).sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF2D2D2D)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Image(
-                        painter = painterResource(R.drawable.logo),
-                        contentDescription = "Logo",
-                        modifier = Modifier.size(screenWidth * 0.22f)
-                    )
-                }
+                drawCircle(
+                    color = Color(0xFFE6E7F2),
+                    radius = size.width * 0.7f,
+                    center = Offset(size.width / 2, 0f)
+                )
             }
 
-            Spacer(modifier = Modifier.height(screenHeight * 0.05f))
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
+            Canvas(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .height(screenHeight * 0.25f)
+                    .align(Alignment.BottomCenter)
             ) {
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text("Usuario") },
-                    shape = RoundedCornerShape(50),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color(0xFFE6E6E6),
-                        focusedBorderColor = Color(0xFF2D2D2D),
-                        unfocusedBorderColor = Color.Transparent
-                    )
+                drawCircle(
+                    color = Color(0xFFE6E7F2),
+                    radius = size.width * 0.3f,
+                    center = Offset(size.width, size.height)
                 )
+            }
 
-                Spacer(modifier = Modifier.height(26.dp))
-
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Correo") },
-                    shape = RoundedCornerShape(50),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.White,
-                        focusedBorderColor = Color(0xFF2D2D2D),
-                        unfocusedBorderColor = Color.Transparent
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(26.dp))
-
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Contraseña") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    shape = RoundedCornerShape(50),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.White,
-                        focusedBorderColor = Color(0xFF2D2D2D),
-                        unfocusedBorderColor = Color.Transparent
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Button(
-                    onClick = attemptRegister,
-                    enabled = !isLoading,
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D2D2D)),
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    // 💡 2. APLICAMOS statusBarsPadding AQUÍ para separar el contenido de la barra
+                    .statusBarsPadding()
+                    .padding(horizontal = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .height(screenHeight * 0.07f)
+                        .fillMaxWidth()
+                        .height(screenHeight * 0.25f),
+                    contentAlignment = Alignment.BottomCenter
                 ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            modifier = Modifier.size(24.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Crear\ncuenta",
+                            fontSize = (screenWidth.value * 0.06).sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF2D2D2D)
                         )
-                    } else {
-                        Text("Registrarse", color = Color.White)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Icon(
-                            imageVector = Icons.Default.ArrowForward,
-                            contentDescription = "Registrarse",
-                            tint = Color.White
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Image(
+                            painter = painterResource(R.drawable.logo),
+                            contentDescription = "Logo",
+                            modifier = Modifier.size(screenWidth * 0.22f)
                         )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(screenHeight * 0.05f))
+                Spacer(modifier = Modifier.height(screenHeight * 0.05f))
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = username,
+                        onValueChange = { username = it },
+                        label = { Text("Usuario") },
+                        shape = RoundedCornerShape(50),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedContainerColor = Color(0xFFE6E6E6),
+                            focusedBorderColor = Color(0xFF2D2D2D),
+                            unfocusedBorderColor = Color.Transparent
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(26.dp))
+
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Correo") },
+                        shape = RoundedCornerShape(50),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedContainerColor = Color.White,
+                            focusedBorderColor = Color(0xFF2D2D2D),
+                            unfocusedBorderColor = Color.Transparent
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(26.dp))
+
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Contraseña") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        shape = RoundedCornerShape(50),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedContainerColor = Color.White,
+                            focusedBorderColor = Color(0xFF2D2D2D),
+                            unfocusedBorderColor = Color.Transparent
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = attemptRegister,
+                        enabled = !isLoading,
+                        shape = RoundedCornerShape(50),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2D2D2D)),
+                        modifier = Modifier
+                            .fillMaxWidth(0.7f)
+                            .height(screenHeight * 0.07f)
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        } else {
+                            Text("Registrarse", color = Color.White)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.Default.ArrowForward,
+                                contentDescription = "Registrarse",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(screenHeight * 0.05f))
+            }
         }
     }
 }

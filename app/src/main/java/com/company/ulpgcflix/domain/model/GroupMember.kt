@@ -1,4 +1,6 @@
-package com.company.ulpgcflix.model
+package com.company.ulpgcflix.domain.model
+
+import com.company.ulpgcflix.domain.model.enums.GroupRole
 
 data class GroupMember(
     private final val id:String,

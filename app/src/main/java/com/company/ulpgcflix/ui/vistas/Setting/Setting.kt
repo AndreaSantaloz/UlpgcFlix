@@ -22,7 +22,8 @@ fun Setting(
     onEditPreferences: () -> Unit,
     onToggleDarkMode: (Boolean) -> Unit,
     onLogout: () -> Unit,
-    isDarkModeEnabled: Boolean = false
+    isDarkModeEnabled: Boolean = false,
+    modifier: Modifier,
 ) {
 
     Scaffold(

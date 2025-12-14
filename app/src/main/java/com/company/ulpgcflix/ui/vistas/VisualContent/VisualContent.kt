@@ -23,7 +23,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.company.ulpgcflix.model.VisualContent
+import com.company.ulpgcflix.domain.model.VisualContent
 import com.company.ulpgcflix.ui.interfaces.ApiService
 import com.company.ulpgcflix.ui.servicios.CategoryServices
 import com.company.ulpgcflix.ui.servicios.VisualContentService
@@ -142,7 +142,7 @@ fun SwipeableCard(
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
 
-            )
+                )
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -179,7 +179,6 @@ fun SwipeableCard(
 }
 
 
-
 @Composable
 fun VisualContent(
     setingSucess: () -> Unit,
@@ -201,7 +200,8 @@ fun VisualContent(
             favoritesService = favoritesService,
             userCategoriesService = userCategoriesService
         )
-    )
+    ),
+    modifier: Modifier,
 ) {
     val contenido by viewModel.contentList
     val scope = rememberCoroutineScope()
@@ -211,8 +211,6 @@ fun VisualContent(
     LaunchedEffect(currentUserId) {
         if (currentUserId != null) {
             viewModel.loadContentForUser(currentUserId, append = false)
-        } else {
-
         }
     }
 
@@ -243,24 +241,23 @@ fun VisualContent(
         }
     }
 
-
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
-            .padding(horizontal=16.dp,vertical=8.dp),
+            .padding(horizontal = 16.dp), // Solo padding horizontal
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top=15.dp,bottom = 6.dp),
+                .padding(top = 3.dp, bottom = 6.dp), // Padding vertical interno mínimo (0dp superior)
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             FloatingActionButton(
                 onClick = onSocialMedia,
-                modifier = Modifier.size(45.dp),
+                modifier = Modifier.size(40.dp),
                 containerColor = MaterialTheme.colorScheme.secondary
             ) {
                 Icon(
@@ -279,7 +276,7 @@ fun VisualContent(
             )
             FloatingActionButton(
                 onClick = setingSucess,
-                modifier = Modifier.size(45.dp),
+                modifier = Modifier.size(40.dp),
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
@@ -309,7 +306,8 @@ fun VisualContent(
 
             Spacer(Modifier.height(24.dp))
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .navigationBarsPadding(),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {

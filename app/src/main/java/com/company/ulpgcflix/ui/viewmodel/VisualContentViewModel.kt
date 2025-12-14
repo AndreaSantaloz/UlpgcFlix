@@ -7,13 +7,15 @@ import androidx.lifecycle.viewModelScope
 import com.company.ulpgcflix.ui.servicios.VisualContentService
 import com.company.ulpgcflix.ui.servicios.CategoryServices
 import com.company.ulpgcflix.ui.servicios.UserCategoriesService // <-- IMPORTANTE
-import com.company.ulpgcflix.model.*
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import com.company.ulpgcflix.domain.model.VisualContent
+import com.company.ulpgcflix.domain.model.enums.kindVisualContent
 import com.company.ulpgcflix.ui.interfaces.ApiService
+import com.company.ulpgcflix.ui.model.CategoryUi
 import com.company.ulpgcflix.ui.servicios.FavoritesService
 
 class VisualContentViewModel(
@@ -36,11 +38,11 @@ class VisualContentViewModel(
     private var currentPage = 1
     private var currentUserGenreIds: String = ""
 
-    private val categoryMap: Map<String, Category> = categoryServices.getCategories()
+    private val categoryMap: Map<String, CategoryUi> = categoryServices.getCategories()
         .associateBy { it.categoryId }
 
-    private fun mapGenreIdsToCategories(genreIds: List<Int>): List<Category> {
-        val defaultCategory = Category("0", "Otros", Icons.Default.Circle)
+    private fun mapGenreIdsToCategories(genreIds: List<Int>): List<CategoryUi> {
+        val defaultCategory = CategoryUi("0", "Otros", Icons.Default.Circle)
         return genreIds.mapNotNull { id ->
             categoryMap[id.toString()]
         }.distinct().let {

@@ -1,4 +1,7 @@
-package com.company.ulpgcflix.model
+package com.company.ulpgcflix.domain.model
+
+import com.company.ulpgcflix.domain.model.enums.kindVisualContent
+import com.company.ulpgcflix.ui.model.CategoryUi
 
 data class VisualContent(
     private val id: String,
@@ -7,7 +10,7 @@ data class VisualContent(
     private val image: String,
     private val assessment: Double,
     private val kind: kindVisualContent,
-    private val category: List<Category>,
+    private val category: List<CategoryUi>,
     private val isAdult: Boolean
 ) {
 
@@ -31,7 +34,7 @@ data class VisualContent(
         get() = this.kind
 
 
-    val getCategory: List<Category>
+    val getCategory: List<CategoryUi>
         get() = this.category
 
     val isAdultContent: Boolean

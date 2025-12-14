@@ -1,12 +1,11 @@
-package com.company.ulpgcflix.model
+package com.company.ulpgcflix.ui.model
 
 import androidx.compose.ui.graphics.vector.ImageVector
 
-
-data class Category(
-    private final val id:String,
-    private final val name: String,
-    private final val icon: ImageVector,
+data class CategoryUi(
+    private  val id:String,
+    private  val name: String,
+    private  val icon: ImageVector,
 ){
 
     val categoryName: String get() = name

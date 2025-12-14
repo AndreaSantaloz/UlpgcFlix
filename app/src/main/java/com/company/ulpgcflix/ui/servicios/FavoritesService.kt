@@ -1,9 +1,9 @@
 package com.company.ulpgcflix.ui.servicios
 
-import com.company.ulpgcflix.model.VisualContent
-import com.company.ulpgcflix.model.ContentLike
-import com.company.ulpgcflix.model.FavoriteContentMetadata
-import com.company.ulpgcflix.model.kindVisualContent
+import com.company.ulpgcflix.domain.model.VisualContent
+import com.company.ulpgcflix.domain.model.ContentLike
+import com.company.ulpgcflix.data.local.entity.FavoriteContentMetadata
+import com.company.ulpgcflix.domain.model.enums.kindVisualContent
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions

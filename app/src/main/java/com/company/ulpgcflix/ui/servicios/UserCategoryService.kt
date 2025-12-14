@@ -1,6 +1,6 @@
 package com.company.ulpgcflix.ui.servicios
 
-import com.company.ulpgcflix.model.Category
+import com.company.ulpgcflix.ui.model.CategoryUi
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -12,7 +12,7 @@ class UserCategoriesService {
     private val categoryService = CategoryServices()
 
 
-    suspend fun saveUserCategories(userId: String, selectedCategories: Set<Category>) {
+    suspend fun saveUserCategories(userId: String, selectedCategories: Set<CategoryUi>) {
         val categoriesCollection = db.collection("categories")
         val existingDocSnapshot = categoriesCollection
             .whereEqualTo("usuario", userId)
@@ -51,7 +51,7 @@ class UserCategoriesService {
         }
     }
 
-    suspend fun getUserCategories(userId: String): Set<Category> {
+    suspend fun getUserCategories(userId: String): Set<CategoryUi> {
         return try {
             val categoriesCollection = db.collection("categories")
             val existingDocSnapshot = categoriesCollection

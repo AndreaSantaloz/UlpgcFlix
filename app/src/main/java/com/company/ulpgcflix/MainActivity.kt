@@ -35,6 +35,7 @@ fun AppContent() {
             NavigationGraph(
                 onToggleDarkMode = onToggleDarkMode,
                 isDarkModeEnabled = isDarkTheme,
+                paddingValues
 
             )
         }

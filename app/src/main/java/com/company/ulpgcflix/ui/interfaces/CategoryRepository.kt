@@ -1,7 +1,7 @@
 package com.company.ulpgcflix.ui.interfaces
 
-import com.company.ulpgcflix.model.Category
+import com.company.ulpgcflix.ui.model.CategoryUi
 
 interface CategoryRepository {
-    fun getCategories(): List<Category>
+    fun getCategories(): List<CategoryUi>
 }

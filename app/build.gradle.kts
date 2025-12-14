@@ -68,7 +68,6 @@ android {
 dependencies {
     // Es recomendable usar la versión más reciente del BOM para estabilidad
     implementation(platform("com.google.firebase:firebase-bom:33.1.0")) // Usando una versión estable
-
     implementation("com.google.firebase:firebase-auth-ktx") // Versiones sin especificar ya que están en el BOM
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

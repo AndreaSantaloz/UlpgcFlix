@@ -1,5 +1,6 @@
 package com.company.ulpgcflix.ui.vistas.Profile
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -79,7 +80,8 @@ private fun fetchProfileData(uid: String, onResult: (UserProfileData?) -> Unit) 
         }
 }
 
-
+// Añadimos la anotación para ignorar el parámetro de padding de Scaffold.
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun ProfileScreen(
     onSettings: () -> Unit,
@@ -87,6 +89,7 @@ fun ProfileScreen(
     onGoToFavorites: () -> Unit,
     isEditing: Boolean,
     onSetEditing: (Boolean) -> Unit,
+    modifier: Modifier,
 ) {
     val firebaseUser = FirebaseAuth.getInstance().currentUser
     val uid = firebaseUser?.uid
@@ -120,196 +123,243 @@ fun ProfileScreen(
         mutableStateOf(profileImageUrlString ?: "")
     }
 
+    // --- Contadores DUMMY para la Interfaz ---
+    val followersCount = 125
+    val followingCount = 45
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 0.dp),
-    ) {
-
-        Box(
+    Scaffold(modifier = modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(400.dp)
-                .background(
-                    color = Color(0xFFD9D9D9),
-                    shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
-                )
+                .fillMaxSize()
+                .padding(horizontal = 0.dp),
         ) {
 
-            if (isLoadingUrl) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(400.dp)
+                    .background(
+                        color = Color(0xFFD9D9D9),
+                        shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
+                    )
+            ) {
+
+                if (isLoadingUrl) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else if (!profileImageUrlString.isNullOrEmpty()) {
+                    Image(
+                        painter = rememberAsyncImagePainter(model = profileImageUrlString),
+                        contentDescription = "Foto de perfil de $username",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Sin imagen de perfil",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(150.dp)
+                        )
+                    }
                 }
-            } else if (!profileImageUrlString.isNullOrEmpty()) {
-                Image(
-                    painter = rememberAsyncImagePainter(model = profileImageUrlString),
-                    contentDescription = "Foto de perfil de $username",
-                    contentScale = ContentScale.Crop,
+
+
+                // Botón de Volver (ArrowBack)
+                IconButton(
+                    onClick = onVisualContent,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
-                    contentAlignment = Alignment.Center
+                        .align(Alignment.TopStart)
+                        .padding(12.dp)
+                        .size(56.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Sin imagen de perfil",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(150.dp)
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Volver a Contenido Visual",
+                        tint = Color.Black,
+                        modifier = Modifier.size(32.dp)
                     )
                 }
+                // Botón de Ajustes (Settings)
+                IconButton(
+                    onClick = onSettings,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                        .size(56.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Ajustes",
+                        tint = Color.Black,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+
             }
 
 
-            IconButton(
-                onClick = onVisualContent,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(12.dp)
-                    .size(56.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Volver a Contenido Visual",
-                    tint = Color.Black,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-            IconButton(
-                onClick = onSettings,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp)
-                    .size(56.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Ajustes",
-                    tint = Color.Black,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-
-
-        }
-
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Text(
-            text = username,
-            fontWeight = FontWeight.Bold,
-            fontSize = 24.sp,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(horizontal = 24.dp)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Sobre mí",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            modifier = Modifier.padding(horizontal = 24.dp)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (isProfileOwner && isEditing) {
-            OutlinedTextField(
-                value = aboutMeText,
-                onValueChange = { aboutMeText = it },
-                label = { Text("Edita tu biografía") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .heightIn(min = 100.dp, max = 200.dp)
-            )
-
-
-            OutlinedTextField(
-                value = currentUrlInput,
-                onValueChange = { currentUrlInput = it },
-                label = { Text("URL de la Foto de Cabecera") },
-                leadingIcon = { Icon(Icons.Default.Image, contentDescription = null) },
-                singleLine = true,
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-            )
-
-            Button(
-                onClick = {
-                    val newUrl = currentUrlInput.takeIf { it.isNotBlank() }
-                    if (uid != null) {
-                        saveProfileData(uid, newUrl, aboutMeText) { success ->
-                            if (success) {
-                                profileImageUrlString = newUrl
-                                onSetEditing(false)
-                            } else {
-                                println("Error al guardar los datos en la base de datos.")
-                            }
-                        }
-                    } else {
-                        onSetEditing(false)
-                    }
-
-                },
-                modifier = Modifier
-                    .padding(top = 8.dp)
-                    .align(Alignment.End)
-                    .padding(horizontal = 24.dp)
-            ) {
-                Text("Guardar")
-            }
-
-        } else {
+            Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = aboutMeText,
-                fontSize = 16.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 16.dp)
-            )
-
-            Spacer(modifier = Modifier.height(30.dp))
-            val favoritosColor = if (isDark) ColorFavoritosDark else ColorFavoritos
-            OutlinedButton(
-                onClick = onGoToFavorites,
+                text = username,
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .fillMaxWidth(0.8f)
+                    .padding(horizontal = 24.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 💡 ZONA AÑADIDA: CONTADORES DE SEGUIDORES/SEGUIDOS
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(horizontal = 24.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = favoritosColor,
-                    containerColor = Color.Transparent
-                )
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Favorite,
-                    contentDescription = "Favoritos",
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Ver Mis Favoritos",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 18.sp,
-                )
+                // 1. Seguidores
+                FollowStat(count = followersCount, label = "Seguidores")
+
+                Spacer(modifier = Modifier.width(32.dp))
+
+                // 2. Seguidos
+                FollowStat(count = followingCount, label = "Seguidos")
             }
-            Spacer(modifier = Modifier.height(30.dp))
+            // 💡 FIN ZONA AÑADIDA
+
+            Spacer(modifier = Modifier.height(16.dp)) // Espacio adicional después de los contadores
+
+            Text(
+                text = "Sobre mí",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.padding(horizontal = 24.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (isProfileOwner && isEditing) {
+                OutlinedTextField(
+                    value = aboutMeText,
+                    onValueChange = { aboutMeText = it },
+                    label = { Text("Edita tu biografía") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .heightIn(min = 100.dp, max = 200.dp)
+                )
+
+
+                OutlinedTextField(
+                    value = currentUrlInput,
+                    onValueChange = { currentUrlInput = it },
+                    label = { Text("URL de la Foto de Cabecera") },
+                    leadingIcon = { Icon(Icons.Default.Image, contentDescription = null) },
+                    singleLine = true,
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                )
+
+                Button(
+                    onClick = {
+                        val newUrl = currentUrlInput.takeIf { it.isNotBlank() }
+                        if (uid != null) {
+                            saveProfileData(uid, newUrl, aboutMeText) { success ->
+                                if (success) {
+                                    profileImageUrlString = newUrl
+                                    onSetEditing(false)
+                                } else {
+                                    println("Error al guardar los datos en la base de datos.")
+                                }
+                            }
+                        } else {
+                            onSetEditing(false)
+                        }
+
+                    },
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .align(Alignment.End)
+                        .padding(horizontal = 24.dp)
+                ) {
+                    Text("Guardar")
+                }
+
+            } else {
+
+                Text(
+                    text = aboutMeText,
+                    fontSize = 16.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 16.dp)
+                )
+
+                Spacer(modifier = Modifier.height(30.dp))
+                val favoritosColor = if (isDark) ColorFavoritosDark else ColorFavoritos
+                OutlinedButton(
+                    onClick = onGoToFavorites,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .fillMaxWidth(0.8f)
+                        .padding(horizontal = 24.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = favoritosColor,
+                        containerColor = Color.Transparent
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = "Favoritos",
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Ver Mis Favoritos",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 18.sp,
+                    )
+                }
+                Spacer(modifier = Modifier.height(30.dp))
+            }
         }
+    }
+}
+
+
+// 💡 NUEVO COMPOSABLE: Contenedor para la cifra y la etiqueta
+@Composable
+fun FollowStat(count: Int, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = count.toString(),
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            color = Color.Gray
+        )
     }
 }
