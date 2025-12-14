@@ -1,15 +1,14 @@
 package com.company.ulpgcflix.ui.servicios
 
-import com.company.ulpgcflix.firebase.FirebaseFirestore
+import com.company.ulpgcflix.firebase.FirestoreRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.Query
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class SocialMediaService(
-    private val firebaseService: FirebaseFirestore,
+    private val firebaseService: FirestoreRepository,
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 ) {
 
@@ -24,7 +23,7 @@ class SocialMediaService(
 
     suspend fun createChannel(name: String, description: String, isPublic: Boolean): String =
         suspendCancellableCoroutine { continuation ->
-            val userId = getUserId()
+            val userId = getUserId() // ID del propietario
             val newChannel = mapOf(
                 "name" to name,
                 "description" to description,
@@ -33,30 +32,47 @@ class SocialMediaService(
                 "createdAt" to System.currentTimeMillis()
             )
 
+            // PASO 1: Crear el canal principal
             firebaseService.createDocument(
                 collectionPath = CHANNELS_PATH,
                 data = newChannel,
-                onSuccess = { docRef: DocumentReference ->
-                    continuation.resume(docRef.id)
+                onSuccess = { channelDocRef: DocumentReference ->
+                    val channelId = channelDocRef.id
+
+                    val ownerMembership = mapOf(
+                        "channelId" to channelId,
+                        "userId" to userId,
+                        "role" to "owner",
+                        "joinedAt" to System.currentTimeMillis()
+                    )
+
+                    firebaseService.createDocument(
+                        collectionPath = CHANNEL_MEMBERS_PATH,
+                        data = ownerMembership,
+                        onSuccess = {
+                            continuation.resume(channelId)
+                        },
+                        onFailure = { memberException ->
+                            continuation.resumeWithException(
+                                IllegalStateException("Canal creado, pero falló al asignar al propietario como miembro.", memberException)
+                            )
+                        }
+                    )
                 },
-                onFailure = { exception ->
-                    continuation.resumeWithException(exception)
+                onFailure = { channelException ->
+                    continuation.resumeWithException(channelException)
                 }
             )
         }
 
-
     suspend fun deleteChannel(channelId: String) {
-        suspendCancellableCoroutine { continuation ->
-            firebaseService.deleteDocument(
-                collectionPath = CHANNELS_PATH,
-                documentId = channelId,
-                onSuccess = { continuation.resume(Unit) },
-                onFailure = { continuation.resumeWithException(it) }
-            )
-        }
+        firebaseService.deleteDocumentAndDependents(
+            rootCollectionPath = CHANNELS_PATH,
+            documentId = channelId,
+            membersCollectionPath = CHANNEL_MEMBERS_PATH,
+            memberFieldName = "channelId"
+        )
     }
-
 
     suspend fun updateChannel(channelId: String, updates: Map<String, Any>) {
         suspendCancellableCoroutine { continuation ->

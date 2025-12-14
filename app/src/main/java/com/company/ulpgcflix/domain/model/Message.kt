@@ -1,10 +1,24 @@
 package com.company.ulpgcflix.domain.model
 
-import com.company.ulpgcflix.domain.model.enums.Status
+
 
 data class Message (
     private val id: String,
     private val idUser: String,
-    private var text: String,
-    private var status: Status,
-)
+    private val text: String,
+    val timestamp: Long = System.currentTimeMillis()
+){
+
+    fun getId(): String {
+        return id
+    }
+
+    fun getIdUser(): String {
+        return idUser
+    }
+
+    fun getText(): String {
+        return text
+    }
+
+}

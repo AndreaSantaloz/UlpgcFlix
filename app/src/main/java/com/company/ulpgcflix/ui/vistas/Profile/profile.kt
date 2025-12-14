@@ -33,19 +33,22 @@ private const val FIRESTORE_COLLECTION_PROFILES = "profiles"
 private const val FIRESTORE_FIELD_URL = "urlImagen"
 private const val FIRESTORE_FIELD_DESCRIPTION = "description"
 private const val FIRESTORE_FIELD_UID = "uidUsuario"
+private const val FIRESTORE_FIELD_NAME = "name" // Nuevo campo para el nombre
 
 data class UserProfileData(
     val imageUrl: String? = null,
-    val description: String = "Hola, soy un crítico de cine apasionado y me encantan las películas de ciencia ficción."
+    val description: String = "Hola, soy un crítico de cine apasionado y me encantan las películas de ciencia ficción.",
+    val name: String? = null // Nuevo campo en el modelo
 )
 
 
-private fun saveProfileData(uid: String, url: String?, description: String, onComplete: (Boolean) -> Unit) {
+private fun saveProfileData(uid: String, url: String?, description: String, name: String?, onComplete: (Boolean) -> Unit) {
     val db = FirebaseFirestore.getInstance()
     val data = hashMapOf(
         FIRESTORE_FIELD_UID to uid,
         FIRESTORE_FIELD_URL to (url ?: ""),
-        FIRESTORE_FIELD_DESCRIPTION to description
+        FIRESTORE_FIELD_DESCRIPTION to description,
+        FIRESTORE_FIELD_NAME to (name ?: "") // Guardar el nombre
     )
 
     db.collection(FIRESTORE_COLLECTION_PROFILES).document(uid)
@@ -69,7 +72,9 @@ private fun fetchProfileData(uid: String, onResult: (UserProfileData?) -> Unit) 
             if (document.exists()) {
                 val imageUrl = document.getString(FIRESTORE_FIELD_URL)
                 val description = document.getString(FIRESTORE_FIELD_DESCRIPTION) ?: UserProfileData().description
-                onResult(UserProfileData(imageUrl.takeIf { !it.isNullOrEmpty() }, description))
+                val name = document.getString(FIRESTORE_FIELD_NAME) // Obtener el nombre
+
+                onResult(UserProfileData(imageUrl.takeIf { !it.isNullOrEmpty() }, description, name.takeIf { !it.isNullOrEmpty() }))
             } else {
                 onResult(UserProfileData())
             }
@@ -95,6 +100,7 @@ fun ProfileScreen(
     val uid = firebaseUser?.uid
     var profileImageUrlString by remember { mutableStateOf<String?>(null) }
     var aboutMeText by remember { mutableStateOf(UserProfileData().description) }
+    var profileName by remember { mutableStateOf<String?>(null) } // Estado para el nombre
     var isLoadingUrl by remember { mutableStateOf(true) }
 
 
@@ -103,6 +109,7 @@ fun ProfileScreen(
             fetchProfileData(uid) { profileData ->
                 profileImageUrlString = profileData?.imageUrl
                 aboutMeText = profileData?.description ?: UserProfileData().description
+                profileName = profileData?.name // Asignar el nombre del perfil
                 isLoadingUrl = false
             }
         } else {
@@ -110,11 +117,12 @@ fun ProfileScreen(
         }
     }
 
-
-    val username = remember(firebaseUser) {
-        firebaseUser?.displayName ?:
-        firebaseUser?.email?.substringBefore('@') ?:
-        "Usuario Desconocido"
+    // Lógica para mostrar el nombre: usar Firestore (profileName), luego Auth (displayName), luego Email
+    val displayedUsername = remember(firebaseUser, profileName) {
+        profileName ?: // 1. Usar el nombre de Firestore (el que el usuario guardó)
+        firebaseUser?.displayName ?: // 2. Fallback al nombre de Auth
+        firebaseUser?.email?.substringBefore('@') ?: // 3. Fallback al email
+        "Usuario Desconocido" // 4. Fallback final
     }
 
     val isProfileOwner = true
@@ -123,9 +131,12 @@ fun ProfileScreen(
         mutableStateOf(profileImageUrlString ?: "")
     }
 
-    // --- Contadores DUMMY para la Interfaz ---
-    val followersCount = 125
-    val followingCount = 45
+    // Input para el nombre en modo edición
+    var currentNameInput by remember(isEditing, profileName) {
+        mutableStateOf(profileName ?: firebaseUser?.displayName ?: "")
+    }
+
+    // SE ELIMINARON LOS CONTADORES DUMMY (followersCount, followingCount)
 
     Scaffold(modifier = modifier.fillMaxSize()) {
         Column(
@@ -143,7 +154,7 @@ fun ProfileScreen(
                         shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
                     )
             ) {
-
+                // ... (Código para cargar la imagen o mostrar el placeholder)
                 if (isLoadingUrl) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -154,7 +165,7 @@ fun ProfileScreen(
                 } else if (!profileImageUrlString.isNullOrEmpty()) {
                     Image(
                         painter = rememberAsyncImagePainter(model = profileImageUrlString),
-                        contentDescription = "Foto de perfil de $username",
+                        contentDescription = "Foto de perfil de $displayedUsername",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxSize()
@@ -208,15 +219,14 @@ fun ProfileScreen(
                         modifier = Modifier.size(32.dp)
                     )
                 }
-
-
             }
 
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Usar displayedUsername (el nombre cargado de Firestore)
             Text(
-                text = username,
+                text = displayedUsername,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
                 modifier = Modifier
@@ -224,27 +234,8 @@ fun ProfileScreen(
                     .padding(horizontal = 24.dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 💡 ZONA AÑADIDA: CONTADORES DE SEGUIDORES/SEGUIDOS
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 1. Seguidores
-                FollowStat(count = followersCount, label = "Seguidores")
-
-                Spacer(modifier = Modifier.width(32.dp))
-
-                // 2. Seguidos
-                FollowStat(count = followingCount, label = "Seguidos")
-            }
-            // 💡 FIN ZONA AÑADIDA
-
-            Spacer(modifier = Modifier.height(16.dp)) // Espacio adicional después de los contadores
+            // SE ELIMINA LA ZONA DE CONTADORES DE SEGUIDORES/SEGUIDOS
+            Spacer(modifier = Modifier.height(16.dp)) // Espacio adicional después del nombre
 
             Text(
                 text = "Sobre mí",
@@ -255,6 +246,20 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             if (isProfileOwner && isEditing) {
+
+                // Campo: Edición del Nombre
+                OutlinedTextField(
+                    value = currentNameInput,
+                    onValueChange = { currentNameInput = it },
+                    label = { Text("Nombre del Perfil") },
+                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    singleLine = true,
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp)
+                        .fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = aboutMeText,
                     onValueChange = { aboutMeText = it },
@@ -281,10 +286,14 @@ fun ProfileScreen(
                 Button(
                     onClick = {
                         val newUrl = currentUrlInput.takeIf { it.isNotBlank() }
+                        val newName = currentNameInput.takeIf { it.isNotBlank() } // Obtener el nuevo nombre
+
                         if (uid != null) {
-                            saveProfileData(uid, newUrl, aboutMeText) { success ->
+                            // PASAR EL NUEVO NOMBRE A LA FUNCIÓN DE GUARDADO
+                            saveProfileData(uid, newUrl, aboutMeText, newName) { success ->
                                 if (success) {
                                     profileImageUrlString = newUrl
+                                    profileName = newName // Actualizar el estado del nombre
                                     onSetEditing(false)
                                 } else {
                                     println("Error al guardar los datos en la base de datos.")
@@ -346,20 +355,4 @@ fun ProfileScreen(
 }
 
 
-// 💡 NUEVO COMPOSABLE: Contenedor para la cifra y la etiqueta
-@Composable
-fun FollowStat(count: Int, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = count.toString(),
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 20.sp,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = label,
-            fontSize = 14.sp,
-            color = Color.Gray
-        )
-    }
-}
+// SE ELIMINA LA FUNCIÓN FollowStat

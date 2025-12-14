@@ -28,8 +28,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.company.ulpgcflix.ui.servicios.FavoritesService
 
-// Añadimos la anotación para ignorar el parámetro de padding de Scaffold,
-// ya que la Column principal gestionará el layout y el padding.
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun FavouriteVisualContent(
@@ -50,14 +49,10 @@ fun FavouriteVisualContent(
     val searchText by viewModel.searchText.collectAsState()
     val isLoading by viewModel.isLoading
     val error by viewModel.error
-
-    // 💡 1. ENVOLVEMOS TODA LA PANTALLA EN UN SCAFFOLD
     Scaffold(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                // 💡 2. APLICAMOS statusBarsPadding AQUÍ para separar el contenido de la barra
-                .statusBarsPadding()
                 .padding(16.dp)
         ) {
             Row(

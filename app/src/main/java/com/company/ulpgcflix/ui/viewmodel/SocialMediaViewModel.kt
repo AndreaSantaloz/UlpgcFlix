@@ -76,7 +76,7 @@ class SocialMediaViewModel(
                         id = dataMap["id"] as? String ?: throw IllegalStateException("Canal sin ID de Firebase"),
                         name = dataMap["name"] as? String ?: "Nombre Desconocido",
                         description = dataMap["description"] as? String ?: "Sin descripción",
-                        idowner = dataMap["ownerId"] as? String ?: "Desconocido",
+                        ownerId = dataMap["ownerId"] as? String ?: "Desconocido",
                         image = dataMap["image"] as? String ?: "",
                         isPublic = dataMap["isPublic"] as? Boolean ?: true,
                     )

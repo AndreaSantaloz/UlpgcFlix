@@ -33,10 +33,9 @@ fun SocialMedia(
     onNavigateBack: () -> Unit,
     onNavigateToCreateChannel: () -> Unit,
     onChannelDialog: (channelId: String) -> Unit,
-    onNavigateToFriendsOrRequests: () -> Unit,
     socialMediaService: SocialMediaService = remember {
         SocialMediaService(
-            firebaseService = com.company.ulpgcflix.firebase.FirebaseFirestore(),
+            firebaseService = com.company.ulpgcflix.firebase.FirestoreRepository(),
             auth = FirebaseAuth.getInstance()
         )
     },
@@ -117,17 +116,8 @@ fun SocialMedia(
                             .padding(horizontal = 8.dp)
                     )
 
-                    // 3. NUEVO BOTÓN: Amigos/Solicitudes (Derecha)
-                    IconButton(onClick = onNavigateToFriendsOrRequests) {
-                        Icon(
-                            Icons.Filled.People,
-                            contentDescription = "Ver Solicitudes/Amigos"
-                        )
-                    }
                 }
-                // --- FIN CABECERA MODIFICADA ---
 
-                // --- Campo de Búsqueda ---
                 OutlinedTextField(
                     value = searchText,
                     onValueChange = viewModel::onSearchTextChanged,

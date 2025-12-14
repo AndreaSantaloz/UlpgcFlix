@@ -16,5 +16,6 @@ sealed class Screen(val route: String) {
 
     object ChannelDialog: Screen("ChannelDialog")
     object ProfileGroupDialog:Screen("ProfileGroupDialog")
-    object FollowDialog : Screen("followDialog")
+    object EditChannelDescription : Screen("editChannelDescription/{channelId}")
+    object EditChannelImage : Screen("editChannelImage/{channelId}")
 }

@@ -8,11 +8,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
-// ... (otras importaciones) ...
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.google.firebase.auth.FirebaseAuth
+import com.company.ulpgcflix.firebase.FirestoreRepository
+
+// --- Importaciones de Vistas ---
 import com.company.ulpgcflix.ui.vistas.Home.OnboardingScreen
 import com.company.ulpgcflix.ui.vistas.Categories.Categories
 import com.company.ulpgcflix.ui.vistas.FavouriteVisualContent.FavouriteVisualContent
@@ -23,44 +28,51 @@ import com.company.ulpgcflix.ui.vistas.Profile.ProfileScreen
 import com.company.ulpgcflix.ui.vistas.Setting.Setting
 import com.company.ulpgcflix.ui.vistas.SocialMedia.Channel.NewChannelDialog
 import com.company.ulpgcflix.ui.vistas.SocialMedia.SocialMedia
-import com.company.ulpgcflix.ui.viewmodel.SocialMediaViewModelFactory
-import com.company.ulpgcflix.ui.viewmodel.SocialMediaViewModel
-import com.company.ulpgcflix.ui.servicios.SocialMediaService
 import com.company.ulpgcflix.ui.vistas.SocialMedia.Channel.ChannelDialog
 import com.company.ulpgcflix.ui.vistas.SocialMedia.Channel.ProfileGroupDialog
-import com.google.firebase.auth.FirebaseAuth
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
 
-// 💡 IMPORTACIÓN NECESARIA para el nuevo Composable
-import com.company.ulpgcflix.ui.vistas.SocialMedia.Friends.FollowDialog
+// --- Importaciones de Servicios ---
+import com.company.ulpgcflix.ui.servicios.SocialMediaService
+import com.company.ulpgcflix.ui.servicios.ChannelDialogService
+import com.company.ulpgcflix.ui.servicios.ChannelProfileService
 
-
+// --- Importaciones de ViewModels y Factories ---
+import com.company.ulpgcflix.ui.viewmodel.SocialMediaViewModel
+import com.company.ulpgcflix.ui.viewmodel.SocialMediaViewModelFactory
+import com.company.ulpgcflix.ui.viewmodel.ChannelDialogViewModel
+import com.company.ulpgcflix.ui.viewmodel.ChannelViewModelFactory
+import com.company.ulpgcflix.ui.viewmodel.ChannelProfileViewModel
+import com.company.ulpgcflix.ui.viewmodel.ChannelProfileViewModelFactory
+import com.company.ulpgcflix.ui.vistas.nav.Screen
 @Composable
 fun NavigationGraph(
     onToggleDarkMode: (Boolean) -> Unit,
     isDarkModeEnabled: Boolean,
-    paddingValues: PaddingValues // <-- Aquí recibes el relleno de Scaffold
+    paddingValues: PaddingValues
 ) {
     val navController = rememberNavController()
-    val auth = FirebaseAuth.getInstance()
 
+    // --- INSTANCIAS ÚNICAS DE DEPENDENCIAS BASE ---
+    val auth = remember { FirebaseAuth.getInstance() }
+    val firestoreRepository = remember { FirestoreRepository() }
+
+    // --- INSTANCIAS ÚNICAS DE SERVICIOS ---
+    val socialMediaService = remember {
+        SocialMediaService(firebaseService = firestoreRepository, auth = auth)
+    }
+    val channelDialogService = remember { ChannelDialogService(firestoreRepository) }
+    // Asumo que ChannelProfileService ha sido actualizado con la lógica de edición
+    val channelProfileService = remember { ChannelProfileService(service = firestoreRepository, auth = auth) }
+
+    // --- Variables de Estado ---
     var isProfileEditing by remember { mutableStateOf(false) }
     var isChannelEditing by remember { mutableStateOf(false) }
 
-    val socialMediaService = remember {
-        SocialMediaService(
-            firebaseService = com.company.ulpgcflix.firebase.FirebaseFirestore(),
-            auth = auth
-        )
-    }
-
-    // El modificador base que contiene el relleno de la barra de estado/navegación
     val safeModifier = Modifier.padding(paddingValues)
 
     NavHost(navController = navController, startDestination = Screen.Onboarding.route) {
 
-        // --- Rutas de Autenticación y Home (SIN CAMBIOS) ---
+        // --- 1. Rutas de Autenticación y Perfiles ---
         composable(Screen.Onboarding.route) {
             OnboardingScreen(
                 onContinueClick = { navController.navigate(Screen.Login.route) },
@@ -127,7 +139,8 @@ fun NavigationGraph(
             )
         }
 
-        // --- Rutas de Social Media (SocialMedia se actualiza para navegar a FollowDialog) ---
+
+        // --- 2. Rutas de Redes Sociales (SocialMedia) ---
         composable(Screen.SocialMedia.route){
             val socialMediaViewModelFactory = remember { SocialMediaViewModelFactory(socialMediaService) }
 
@@ -138,27 +151,12 @@ fun NavigationGraph(
                 onChannelDialog = { channelId ->
                     navController.navigate("${Screen.ChannelDialog.route}/$channelId")
                 },
-                // 💡 CAMBIO: Navegación al FollowDialog al presionar el icono de personas
-                onNavigateToFriendsOrRequests = { navController.navigate(Screen.FollowDialog.route) },
                 modifier = safeModifier
             )
         }
 
-        // ----------------------------------------------------------------------------------
-        // 💡 NUEVA RUTA: FOLLOW DIALOG
-        // ----------------------------------------------------------------------------------
-        composable(Screen.FollowDialog.route) {
-            FollowDialog(
-                onNavigateBack = { navController.popBackStack() },
-                // Aquí podrías pasar el SocialMediaViewModel o un ViewModel dedicado
-                // para manejar las solicitudes de seguimiento reales.
-                modifier = safeModifier
-            )
-        }
-        // ----------------------------------------------------------------------------------
 
 
-        // --- Rutas de Diálogos (SIN CAMBIOS) ---
         composable(Screen.NewChannelDialog.route){
             val socialMediaViewModelFactory = remember { SocialMediaViewModelFactory(socialMediaService) }
 
@@ -169,25 +167,62 @@ fun NavigationGraph(
             )
         }
 
+        // --- 3. Ruta de Mensajería (ChannelDialog) ---
         composable(
             route = "${Screen.ChannelDialog.route}/{channelId}",
             arguments = listOf(navArgument("channelId") { type = NavType.StringType })
         ) { backStackEntry ->
+
             val channelId = backStackEntry.arguments?.getString("channelId") ?: return@composable
+
+            val channelViewModelFactory = remember {
+                ChannelViewModelFactory(
+                    dialogService = channelDialogService,
+                    profileService = channelProfileService
+                )
+            }
+
+            val channelViewModel: ChannelDialogViewModel = viewModel(factory = channelViewModelFactory)
 
             ChannelDialog(
                 channelId = channelId,
                 onNavigateBack = { navController.popBackStack() },
                 onProfileGroup = {
-                    navController.navigate(Screen.ProfileGroupDialog.route)
+                    navController.navigate("${Screen.ProfileGroupDialog.route}/$channelId")
                 },
-                modifier = safeModifier
+                channelViewModel = channelViewModel,
+                modifier = safeModifier,
             )
         }
 
-        composable(Screen.ProfileGroupDialog.route) {
+        // --- 4. Ruta del Perfil del Canal (ProfileGroupDialog) ---
+        composable(
+            route = "${Screen.ProfileGroupDialog.route}/{channelId}",
+            arguments = listOf(navArgument("channelId") { type = NavType.StringType })
+        ) { backStackEntry ->
+
+            val channelId = backStackEntry.arguments?.getString("channelId") ?: return@composable
+
+            val channelProfileViewModelFactory = remember {
+                ChannelProfileViewModelFactory(channelProfileService)
+            }
+
+            val channelProfileViewModel: ChannelProfileViewModel = viewModel(factory = channelProfileViewModelFactory)
+
             ProfileGroupDialog(
+                channelId = channelId,
                 onNavigateBack = { navController.popBackStack() },
+
+                onEditDescriptionClick = {
+                },
+
+                onEditImageClick = {
+                },
+
+                onEditChannelGeneralClick = {
+                },
+
+                channelProfileService = channelProfileService,
                 modifier = safeModifier
             )
         }

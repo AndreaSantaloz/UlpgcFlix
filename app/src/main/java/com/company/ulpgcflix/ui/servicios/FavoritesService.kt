@@ -8,7 +8,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
-import java.lang.Exception // Importado para la excepción en getUserId
+import java.lang.Exception
 
 class FavoritesService(
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),

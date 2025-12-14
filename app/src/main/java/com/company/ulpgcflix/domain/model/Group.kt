@@ -1,13 +1,17 @@
 package com.company.ulpgcflix.domain.model
 
 data class Group(
-    private final val id: String,
-    private final val name: String,
-    private final val image:String,
-    private final val idowner:String,
-    private  val description:String,
-    private val isPublic:Boolean=false,
+    private  val id: String,
+    private  val name: String,
+    private  val image:String,
+    private  val ownerId:String,
+    private  var description:String,
+    private var isPublic:Boolean=false,
 ){
+
+    val getIsPublic: Boolean
+        get() = this.isPublic
+
 
     val getId: String
         get() = this.id
@@ -19,7 +23,7 @@ data class Group(
         get() = this.name
 
     val getIdOwner: String
-        get() = this.idowner
+        get() = this.ownerId
 
     val getImage: String
         get() = this.image
