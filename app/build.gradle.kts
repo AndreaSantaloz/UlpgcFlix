@@ -67,6 +67,7 @@ android {
 // --- Dependencias ---
 dependencies {
     // Es recomendable usar la versión más reciente del BOM para estabilidad
+    implementation("androidx.appcompat:appcompat:1.6.1")
     implementation(platform("com.google.firebase:firebase-bom:33.1.0")) // Usando una versión estable
     implementation("com.google.firebase:firebase-auth-ktx") // Versiones sin especificar ya que están en el BOM
     implementation("com.google.firebase:firebase-firestore")
